@@ -248,6 +248,7 @@ export namespace model {
 	    }
 	}
 	export class PoolConfig {
+	    poolId: string;
 	    poolName: string;
 	    poolType: string;
 	    up6Name: string;
@@ -262,6 +263,7 @@ export namespace model {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.poolId = source["poolId"];
 	        this.poolName = source["poolName"];
 	        this.poolType = source["poolType"];
 	        this.up6Name = source["up6Name"];

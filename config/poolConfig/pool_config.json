@@ -1,6 +1,7 @@
 {
   "charPools": [
     {
+      "poolId": "standard",
       "poolName": "基础寻访",
       "poolType": "standard",
       "up6Name": "",
@@ -8,6 +9,7 @@
       "lastUpdate": "2026-02-20 15:26:16"
     },
     {
+      "poolId": "beginner",
       "poolName": "启程寻访",
       "poolType": "beginner",
       "up6Name": "",
@@ -15,6 +17,7 @@
       "lastUpdate": "2026-02-21 15:26:16"
     },
     {
+      "poolId": "special_1_0_1",
       "poolName": "熔火灼痕",
       "poolType": "special",
       "up6Name": "莱万汀",
@@ -23,6 +26,7 @@
       "lastUpdate": "2026-02-23 15:26:16"
     },
     {
+      "poolId": "special_1_0_2",
       "poolName": "轻飘飘的信使",
       "poolType": "special",
       "up6Name": "洁尔佩塔",
@@ -31,6 +35,7 @@
       "lastUpdate": "2026-02-24 15:26:16"
     },
     {
+      "poolId": "special_1_0_3",
       "poolName": "热烈色彩",
       "poolType": "special",
       "up6Name": "伊冯",
@@ -39,6 +44,7 @@
       "lastUpdate": "2026-02-24 18:33:59"
     },
     {
+      "poolId": "special_1_1_1",
       "poolName": "河流的女儿",
       "poolType": "special",
       "up6Name": "汤汤",
@@ -47,6 +53,7 @@
       "lastUpdate": "2026-03-13 13:17:02"
     },
     {
+      "poolId": "special_1_1_2",
       "poolName": "狼珀",
       "poolType": "special",
       "up6Name": "洛茜",
@@ -55,6 +62,7 @@
       "lastUpdate": "2026-04-02 23:55:02"
     },
     {
+      "poolId": "special_1_2_1",
       "poolName": "春雷动，万物生",
       "poolType": "special",
       "up6Name": "庄方宜",
@@ -63,6 +71,7 @@
       "lastUpdate": "2026-04-29 23:00:14"
     },
     {
+      "poolId": "special_1_3_1",
       "poolName": "拳出无悔",
       "poolType": "special",
       "up6Name": "弭弗",
@@ -71,6 +80,7 @@
       "lastUpdate": "2026-06-05 23:00:14"
     },
     {
+      "poolId": "special_1_3_2",
       "poolName": "逐罪者",
       "poolType": "special",
       "up6Name": "卡缪",
@@ -79,6 +89,7 @@
       "lastUpdate": "2026-06-26 23:12:25"
     },
     {
+      "poolId": "special_1_4_1",
       "poolName": "临渊望北",
       "poolType": "special",
       "up6Name": "诀",
@@ -87,6 +98,7 @@
       "lastUpdate": "2026-07-16 14:56:32"
     },
     {
+      "poolId": "special_1_4_2",
       "poolName": "晨星于此闪耀",
       "poolType": "special",
       "up6Name": "梨诺",
@@ -95,6 +107,7 @@
       "lastUpdate": "2026-08-23 12:50:36"
     },
     {
+      "poolId": "special_1_5_1",
       "poolName": "冬猎",
       "poolType": "special",
       "up6Name": "提弗洛斯",
@@ -105,6 +118,7 @@
   ],
   "weaponPools": [
     {
+      "poolId": "weaponbox_constant_1",
       "poolName": "坚冰申领",
       "poolType": "",
       "up6Name": "赫拉芬格",
@@ -113,6 +127,7 @@
       "lastUpdate": "2026-01-21 20:24:35"
     },
     {
+      "poolId": "weaponbox_constant_2",
       "poolName": "星声申领",
       "poolType": "",
       "up6Name": "沧溟星梦",
@@ -121,6 +136,7 @@
       "lastUpdate": "2026-01-21 20:24:35"
     },
     {
+      "poolId": "weaponbox_constant_3",
       "poolName": "远途申领",
       "poolType": "",
       "up6Name": "不知归",
@@ -129,6 +145,7 @@
       "lastUpdate": "2026-01-21 20:24:35"
     },
     {
+      "poolId": "weaponbox_constant_4",
       "poolName": "崇山申领",
       "poolType": "",
       "up6Name": "负山",
@@ -137,6 +154,7 @@
       "lastUpdate": "2026-01-21 20:24:35"
     },
     {
+      "poolId": "weaponbox_constant_5",
       "poolName": "雷鸣申领",
       "poolType": "",
       "up6Name": "大雷斑",
@@ -145,6 +163,7 @@
       "lastUpdate": "2026-01-21 20:24:35"
     },
     {
+      "poolId": "weponbox_1_0_1",
       "poolName": "熔铸申领",
       "poolType": "",
       "up6Name": "熔铸火焰",
@@ -153,6 +172,7 @@
       "lastUpdate": "2026-01-21 20:24:35"
     },
     {
+      "poolId": "weponbox_1_0_3",
       "poolName": "迅行申领",
       "poolType": "",
       "up6Name": "使命必达",
@@ -161,6 +181,7 @@
       "lastUpdate": "2026-02-06 20:24:35"
     },
     {
+      "poolId": "weponbox_1_0_2",
       "poolName": "绘涂申领",
       "poolType": "",
       "up6Name": "艺术暴君",
@@ -169,6 +190,7 @@
       "lastUpdate": "2026-02-23 20:24:35"
     },
     {
+      "poolId": "weponbox_1_1_1",
       "poolName": "新芽申领",
       "poolType": "",
       "up6Name": "落草",
@@ -177,6 +199,7 @@
       "lastUpdate": "2026-03-11 20:24:35"
     },
     {
+      "poolId": "weponbox_1_1_2",
       "poolName": "绯珀申领",
       "poolType": "",
       "up6Name": "狼之绯",
@@ -185,6 +208,7 @@
       "lastUpdate": "2026-03-28 20:24:35"
     },
     {
+      "poolId": "weponbox_1_2_1",
       "poolName": "行舟申领",
       "poolType": "",
       "up6Name": "孤舟",
@@ -193,6 +217,7 @@
       "lastUpdate": "2026-04-16 20:24:35"
     },
     {
+      "poolId": "weponbox_1_3_1",
       "poolName": "绛结申领",
       "poolType": "",
       "up6Name": "赤缨",
@@ -201,6 +226,7 @@
       "lastUpdate": "2026-06-03 20:24:35"
     },
     {
+      "poolId": "weponbox_1_3_2",
       "poolName": "染赤申领",
       "poolType": "",
       "up6Name": "镀红祝福",
@@ -209,6 +235,7 @@
       "lastUpdate": "2026-07-13 01:24:58"
     },
     {
+      "poolId": "weponbox_1_4_1",
       "poolName": "军列申领",
       "poolType": "",
       "up6Name": "四二式·肃阵",
@@ -217,6 +244,7 @@
       "lastUpdate": "2026-07-16 14:56:32"
     },
     {
+      "poolId": "weponbox_1_4_2",
       "poolName": "明曜申领",
       "poolType": "",
       "up6Name": "曜夜的首演",
@@ -225,6 +253,7 @@
       "lastUpdate": "2026-08-10 14:56:32"
     },
     {
+      "poolId": "weponbox_1_5_1",
       "poolName": "幽寒申领",
       "poolType": "normal",
       "up6Name": "寒夜幽影",
@@ -233,5 +262,5 @@
       "lastUpdate": "2026-09-04 11:35:17"
     }
   ],
-  "lastUpdate": "2026-09-04 11:35:17"
+  "lastUpdate": "2026-09-07 20:15:02"
 }

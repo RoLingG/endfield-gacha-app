@@ -102,6 +102,78 @@ func SaveDiscoveredPoolIDs(poolIDs []string, isWeapon bool) error {
 	return nil
 }
 
+// RemoveDiscoveredPoolIDs 从 discovered_pool_ids.json 剔除指定卡池ID（死池清理）。
+// 仅应在 FetchPoolContent 明确返回 404/Pool not found（官方已无此池数据）时调用；
+// 网络超时等临时错误不得调用，防止误杀活池。剔除后原子重写文件（.tmp + rename）。
+func RemoveDiscoveredPoolIDs(poolIDs []string, isWeapon bool) error {
+	// 先加载现有列表
+	existing, err := LoadDiscoveredPoolIDs()
+	if err != nil {
+		return fmt.Errorf("加载现有pool_id失败: %v", err)
+	}
+
+	// 构建待剔除集合
+	removeSet := make(map[string]bool, len(poolIDs))
+	for _, id := range poolIDs {
+		removeSet[id] = true
+	}
+
+	// 根据类型选择目标字段并过滤
+	var target *[]string
+	if isWeapon {
+		target = &existing.WeaponPoolIDs
+	} else {
+		target = &existing.CharPoolIDs
+	}
+	originalLen := len(*target)
+	filtered := make([]string, 0, originalLen)
+	removedCount := 0
+	for _, id := range *target {
+		if removeSet[id] {
+			removedCount++
+			continue
+		}
+		filtered = append(filtered, id)
+	}
+	*target = filtered
+
+	if removedCount == 0 {
+		return nil // 没有可剔除项，不写文件
+	}
+
+	poolConfigDir, err := getPoolConfigDir()
+	if err != nil {
+		return fmt.Errorf("获取配置目录失败: %v", err)
+	}
+	configPath := filepath.Join(poolConfigDir, discoveredPoolIDsFileName)
+
+	data, err := json.MarshalIndent(existing, "", "  ")
+	if err != nil {
+		return fmt.Errorf("序列化失败: %v", err)
+	}
+
+	// 原子写入：先写 .tmp 再 rename，避免写一半崩溃导致 ID 列表损坏
+	tmpPath := configPath + ".tmp"
+	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
+		return fmt.Errorf("写入临时文件失败: %v", err)
+	}
+	if err := os.Rename(tmpPath, configPath); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("重命名文件失败: %v", err)
+	}
+
+	poolType := "char"
+	if isWeapon {
+		poolType = "weapon"
+	}
+	logger.Log.Info("Dead pool IDs removed",
+		zap.String("type", poolType),
+		zap.Int("removed", removedCount),
+		zap.Int("remaining", len(*target)))
+
+	return nil
+}
+
 // LoadDiscoveredPoolIDs 加载已发现的卡池ID列表
 func LoadDiscoveredPoolIDs() (*DiscoveredPoolIDs, error) {
 	poolConfigDir, err := getPoolConfigDir()
@@ -150,10 +222,15 @@ func SavePoolConfig(configList model.PoolConfigList, isWeapon bool) (string, err
 		existingPools = &existing.CharPools
 	}
 
-	// 构建现有卡池名称的集合，用于快速查重
-	existingPoolNames := make(map[string]bool)
+	// 构建现有卡池的去重键集合，用于快速查重
+	// 优先用 PoolID（卡池唯一标识），老数据 PoolID 为空串时回退按 PoolName 匹配
+	existingKeys := make(map[string]bool)
 	for _, pool := range *existingPools {
-		existingPoolNames[pool.PoolName] = true
+		key := pool.PoolID
+		if key == "" {
+			key = pool.PoolName
+		}
+		existingKeys[key] = true
 	}
 
 	// 根据类型选择对应的新卡池列表
@@ -164,12 +241,16 @@ func SavePoolConfig(configList model.PoolConfigList, isWeapon bool) (string, err
 		newPools = configList.CharPools
 	}
 
-	// 追加不重复的新卡池
+	// 追加不重复的新卡池，去重键：优先 PoolID，老数据回退按 PoolName
 	addedCount := 0
 	for _, newPool := range newPools {
-		if !existingPoolNames[newPool.PoolName] {
+		key := newPool.PoolID
+		if key == "" {
+			key = newPool.PoolName
+		}
+		if !existingKeys[key] {
 			*existingPools = append(*existingPools, newPool)
-			existingPoolNames[newPool.PoolName] = true
+			existingKeys[key] = true
 			addedCount++
 		}
 	}

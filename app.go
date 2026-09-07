@@ -261,7 +261,8 @@ func (a *App) internalFetchAndSave(token, serverID, lang string, uid string, ser
 	ctx := a.startCancellableOperation()
 	defer a.clearCancelFunc()
 	wailsRuntime.EventsEmit(a.ctx, "fetch-progress", "正在抓取角色数据...")
-	charData, err := api.FetchCharDataAll(ctx, token, serverID, lang)
+	charKnown := storage.LoadKnownSeqIDs[model.EndFieldCharInfo](uid, serverType, model.PoolTypeChar)
+	charData, err := api.FetchCharDataAll(ctx, token, serverID, lang, charKnown)
 	if err != nil {
 		return "", fmt.Errorf("角色记录抓取失败: %v", err)
 	}
@@ -269,7 +270,9 @@ func (a *App) internalFetchAndSave(token, serverID, lang string, uid string, ser
 	if _, err := storage.MergeAndSaveData(charData, uid, serverType, model.PoolTypeChar); err != nil {
 		logger.Log.Warn("Character save warning", zap.Error(err))
 	}
-	weaponData, err := api.FetchWeaponDataAll(ctx, token, serverID, lang)
+	wailsRuntime.EventsEmit(a.ctx, "fetch-progress", "正在抓取武器数据...")
+	weaponKnown := storage.LoadKnownSeqIDs[model.EndFieldWeaponInfo](uid, serverType, model.PoolTypeWeapon)
+	weaponData, err := api.FetchWeaponDataAll(ctx, token, serverID, lang, weaponKnown)
 	if err != nil {
 		return "", fmt.Errorf("武器记录抓取失败: %v", err)
 	}
@@ -335,7 +338,7 @@ type FetchDataType[T model.GachaItem] struct {
 	ServerType string
 	LogAction  string
 	Category   string
-	FetchFunc  func(ctx context.Context, token, serverID, lang string) ([]T, error)
+	FetchFunc  func(ctx context.Context, token, serverID, lang string, knownSeqIDs map[string]struct{}) ([]T, error)
 }
 type FetchDataResponse[T model.GachaItem] struct {
 	Uid  string `json:"uid"`
@@ -363,7 +366,8 @@ func fetchData[T model.GachaItem](a *App, req FetchDataType[T]) (FetchDataRespon
 		dataType = "武器"
 	}
 	wailsRuntime.EventsEmit(a.ctx, "fetch-progress", fmt.Sprintf("正在抓取%s数据...", dataType))
-	newData, err := req.FetchFunc(ctx, token, serverID, lang)
+	known := storage.LoadKnownSeqIDs[T](uid, req.ServerType, req.Category)
+	newData, err := req.FetchFunc(ctx, token, serverID, lang, known)
 	if err != nil {
 		logger.Log.Error("Network request failed", zap.Error(err))
 		return FetchDataResponse[T]{}, fmt.Errorf("数据请求失败: %v", err)
@@ -597,10 +601,30 @@ func (a *App) UpdatePoolConfig() (string, error) {
 	serverID := "1"
 	lang := "zh-cn"
 
+	// 已有介绍页的池不再重拉，只拉新池。
+	var deadCharPoolIDs []string
+	var deadWeaponPoolIDs []string
+	knownPools := map[string]bool{} // 已落盘介绍页的池ID集合
+	if existing, err := storage.LoadPoolConfig(); err == nil {
+		for _, p := range existing.CharPools {
+			if p.PoolID != "" {
+				knownPools[p.PoolID] = true
+			}
+		}
+		for _, p := range existing.WeaponPools {
+			if p.PoolID != "" {
+				knownPools[p.PoolID] = true
+			}
+		}
+	}
+
 	// --- 角色池处理 ---
 	var charConfigs []model.PoolConfig
 	for _, poolID := range discovered.CharPoolIDs {
 		if poolID == "gachaPool_0" || poolID == "gachaPool_1" {
+			continue
+		}
+		if knownPools[poolID] {
 			continue
 		}
 		resp, err := api.FetchPoolContent(poolID, serverID, lang)
@@ -608,9 +632,13 @@ func (a *App) UpdatePoolConfig() (string, error) {
 			logger.Log.Warn("Failed to fetch char pool content",
 				zap.String("pool_id", poolID),
 				zap.Error(err))
+			if strings.Contains(err.Error(), "Pool not found") {
+				deadCharPoolIDs = append(deadCharPoolIDs, poolID)
+			}
 			continue
 		}
 		config := model.PoolConfig{
+			PoolID:     poolID,
 			PoolName:   resp.Data.Pool.PoolName,
 			PoolType:   resp.Data.Pool.PoolType,
 			Up6Name:    resp.Data.Pool.Up6Name,
@@ -626,20 +654,27 @@ func (a *App) UpdatePoolConfig() (string, error) {
 			}
 		}
 		charConfigs = append(charConfigs, config)
-		time.Sleep(300 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 	}
 
 	// --- 武器池处理 ---
 	var weaponConfigs []model.PoolConfig
 	for _, poolID := range discovered.WeaponPoolIDs {
+		if knownPools[poolID] {
+			continue
+		}
 		resp, err := api.FetchPoolContent(poolID, serverID, lang)
 		if err != nil {
 			logger.Log.Warn("Failed to fetch weapon pool content",
 				zap.String("pool_id", poolID),
 				zap.Error(err))
+			if strings.Contains(err.Error(), "Pool not found") {
+				deadWeaponPoolIDs = append(deadWeaponPoolIDs, poolID)
+			}
 			continue
 		}
 		config := model.PoolConfig{
+			PoolID:     poolID,
 			PoolName:   resp.Data.Pool.PoolName,
 			PoolType:   resp.Data.Pool.PoolType,
 			Up6Name:    resp.Data.Pool.Up6Name,
@@ -655,11 +690,27 @@ func (a *App) UpdatePoolConfig() (string, error) {
 			}
 		}
 		weaponConfigs = append(weaponConfigs, config)
-		time.Sleep(300 * time.Millisecond)
+		time.Sleep(300 * time.Millisecond) // 池间间隔，避免频繁访问官方服务器
+	}
+
+	// 放在循环后而非循环内，避免边遍历边修改文件带来的不一致。
+	if len(deadCharPoolIDs) > 0 {
+		if err := storage.RemoveDiscoveredPoolIDs(deadCharPoolIDs, false); err != nil {
+			logger.Log.Error("Failed to remove dead char pool IDs", zap.Error(err))
+		}
+	}
+	if len(deadWeaponPoolIDs) > 0 {
+		if err := storage.RemoveDiscoveredPoolIDs(deadWeaponPoolIDs, true); err != nil {
+			logger.Log.Error("Failed to remove dead weapon pool IDs", zap.Error(err))
+		}
 	}
 
 	if len(charConfigs) == 0 && len(weaponConfigs) == 0 {
-		return "", fmt.Errorf("未获取到任何有效的卡池配置")
+		// 池配置已在本地，直接视为无变动返回，避免把正常增量同步误报为错误。
+		logger.Log.Info("No new pool content fetched (all pools already known)",
+			zap.Int("char_pools", len(charConfigs)),
+			zap.Int("weapon_pools", len(weaponConfigs)))
+		return "卡池配置无变动 / Pool config unchanged", nil
 	}
 
 	// 构建配置列表

@@ -62,14 +62,13 @@ func (s *gachaSession) get(ctx context.Context, targetURL string, queryParams ur
 	return io.ReadAll(resp.Body)
 }
 
-// fetchPaginated 通用分页抓取：循环请求直到 hasMore 为 false
-// buildParams: 构造每页请求参数（seqID 由本函数负责追加）
-// parseList: 解析响应体，返回条目列表、是否还有下一页、下一页 seqID
-func fetchPaginated[T any](
+// fetchPaginated 通用分页抓取，循环请求直到获取数据的 hasMore 为 false
+func fetchPaginated[T model.GachaItem](
 	ctx context.Context,
 	sess *gachaSession,
 	baseURL string,
 	refererPage string,
+	knownSeqIDs map[string]struct{},
 	buildParams func(seqID string) url.Values,
 	parseList func(body []byte) (items []T, hasMore bool, nextSeqID string, err error),
 ) ([]T, error) {
@@ -101,17 +100,30 @@ func fetchPaginated[T any](
 			return nil, err
 		}
 		list = append(list, items...)
+		// 增量早停：整页记录均已已知 → 后续页只会更旧，无需继续翻页
+		if knownSeqIDs != nil && hasMore && len(items) > 0 {
+			allKnown := true
+			for _, item := range items {
+				if _, ok := knownSeqIDs[item.GetSeqID()]; !ok {
+					allKnown = false
+					break
+				}
+			}
+			if allKnown {
+				break
+			}
+		}
 		if !hasMore || len(items) == 0 {
 			break
 		}
-		time.Sleep(200 * time.Millisecond) // 分页间隔，避免频繁请求
+		time.Sleep(100 * time.Millisecond) // 分页间隔，避免频繁请求
 		seqID = next
 	}
 	return list, nil
 }
 
 // FetchCharDataAll 获取所有角色池数据
-func FetchCharDataAll(ctx context.Context, token, serverID, lang string) ([]model.EndFieldCharInfo, error) {
+func FetchCharDataAll(ctx context.Context, token, serverID, lang string, knownSeqIDs map[string]struct{}) ([]model.EndFieldCharInfo, error) {
 	if token == "" {
 		return nil, fmt.Errorf("token invalid")
 	}
@@ -130,7 +142,7 @@ func FetchCharDataAll(ctx context.Context, token, serverID, lang string) ([]mode
 	results := make(chan result, len(poolTypes))
 	for _, pt := range poolTypes {
 		go func(poolType string) {
-			data, err := fetchCharDataFromPool(ctx, session, poolType)
+			data, err := fetchCharDataFromPool(ctx, session, poolType, knownSeqIDs) // 透传早停集合（3 个 goroutine 共享同一只读 map，并发读安全）
 			select {
 			case results <- result{data: data, err: err}:
 			case <-ctx.Done():
@@ -175,8 +187,9 @@ func FetchCharDataAll(ctx context.Context, token, serverID, lang string) ([]mode
 	return allData, nil
 }
 
-func fetchCharDataFromPool(ctx context.Context, sess *gachaSession, poolType string) ([]model.EndFieldCharInfo, error) {
+func fetchCharDataFromPool(ctx context.Context, sess *gachaSession, poolType string, knownSeqIDs map[string]struct{}) ([]model.EndFieldCharInfo, error) {
 	return fetchPaginated(ctx, sess, BaseUrlChar, "gacha_char",
+		knownSeqIDs,
 		// 构造角色池请求参数
 		func(seqID string) url.Values {
 			params := url.Values{}
@@ -206,8 +219,14 @@ func fetchCharDataFromPool(ctx context.Context, sess *gachaSession, poolType str
 		})
 }
 
+type poolResult struct {
+	poolName string
+	data     []model.EndFieldWeaponInfo
+	err      error
+}
+
 // FetchWeaponDataAll 获取所有武器数据
-func FetchWeaponDataAll(ctx context.Context, token, serverID, lang string) ([]model.EndFieldWeaponInfo, error) {
+func FetchWeaponDataAll(ctx context.Context, token, serverID, lang string, knownSeqIDs map[string]struct{}) ([]model.EndFieldWeaponInfo, error) {
 	if token == "" {
 		return nil, fmt.Errorf("token 为空")
 	}
@@ -219,23 +238,30 @@ func FetchWeaponDataAll(ctx context.Context, token, serverID, lang string) ([]mo
 	}
 	var allData []model.EndFieldWeaponInfo
 	successCount := 0
-	// 遍历每个卡池获取详情
+
+	// 并发获取卡池详情数据
+	poolCh := make(chan poolResult, len(pools))
 	for _, pool := range pools {
+		go func(poolID, poolName string) {
+			data, err := fetchWeaponDataByPool(ctx, sess, poolID, knownSeqIDs) // 透传早停集合
+			poolCh <- poolResult{poolName: poolName, data: data, err: err}
+		}(pool.PoolID, pool.PoolName)
+	}
+	// 收集协程中传输的卡池详情数据
+	for n := 0; n < len(pools); n++ {
 		select {
 		case <-ctx.Done():
 			return nil, fmt.Errorf("操作被取消: %w", ctx.Err())
-		default:
+		case res := <-poolCh:
+			if res.err != nil {
+				logger.Log.Warn("Failed to fetch specific weapon pool",
+					zap.String("pool_name", res.poolName),
+					zap.Error(res.err))
+				continue
+			}
+			successCount++
+			allData = append(allData, res.data...)
 		}
-		poolData, err := fetchWeaponDataByPool(ctx, sess, pool.PoolID)
-		if err != nil {
-			logger.Log.Warn("Failed to fetch specific weapon pool",
-				zap.String("pool_name", pool.PoolName),
-				zap.Error(err))
-			continue
-		}
-		successCount++
-		allData = append(allData, poolData...)
-		time.Sleep(300 * time.Millisecond) // 请求间隔，避免频繁访问官方服务器
 	}
 	if len(pools) > 0 && successCount == 0 {
 		return nil, fmt.Errorf("未获取到任何武器池详情数据")
@@ -283,8 +309,9 @@ func fetchWeaponPoolList(ctx context.Context, sess *gachaSession) ([]model.EndFi
 }
 
 // fetchWeaponDataByPool 获取特定卡池的抽卡记录
-func fetchWeaponDataByPool(ctx context.Context, sess *gachaSession, poolID string) ([]model.EndFieldWeaponInfo, error) {
+func fetchWeaponDataByPool(ctx context.Context, sess *gachaSession, poolID string, knownSeqIDs map[string]struct{}) ([]model.EndFieldWeaponInfo, error) {
 	list, err := fetchPaginated(ctx, sess, BaseUrlWeapon, "gacha_weapon",
+		knownSeqIDs,
 		// 构造武器池请求参数
 		func(seqID string) url.Values {
 			params := url.Values{}

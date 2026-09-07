@@ -185,6 +185,26 @@ func MergeAndSaveData[T model.GachaItem](newData []T, uid, serverType, category 
 	return mergedList, nil
 }
 
+// LoadKnownSeqIDs 读取本地已落盘JSON所有记录的 seqId，构建集合供增量早停判定。
+func LoadKnownSeqIDs[T model.GachaItem](uid, serverType, category string) map[string]struct{} {
+	list, err := ReadData[T](uid, serverType, category)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			logger.Log.Warn("LoadKnownSeqIDs failed, fallback to full fetch",
+				zap.String("category", category), zap.Error(err))
+		}
+		return nil
+	}
+	if len(list) == 0 {
+		return nil
+	}
+	set := make(map[string]struct{}, len(list))
+	for _, item := range list {
+		set[item.GetSeqID()] = struct{}{}
+	}
+	return set
+}
+
 // ReadData 读取指定文件数据
 func ReadData[T any](uid, serverType, category string) ([]T, error) {
 	filePath, err := getFilePath(uid, serverType, category)

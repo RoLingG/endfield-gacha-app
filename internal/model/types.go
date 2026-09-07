@@ -184,6 +184,7 @@ type PoolContentResponse struct {
 
 // PoolConfig 卡池配置（用于前端）
 type PoolConfig struct {
+	PoolID      string `json:"poolId"`
 	PoolName    string `json:"poolName"`
 	PoolType    string `json:"poolType"`
 	Up6Name     string `json:"up6Name"`
