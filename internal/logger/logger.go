@@ -51,7 +51,7 @@ func InitLogger() {
 	core := zapcore.NewTee(fileCore, consoleCore)
 	Log = zap.New(core, zap.AddCaller())
 
-	Log.Info("Endfield Terminal System Startup", zap.String("version", "v1.6.7"))
+	Log.Info("Endfield Terminal System Startup", zap.String("version", "v1.6.8"))
 }
 
 func Sync() {
