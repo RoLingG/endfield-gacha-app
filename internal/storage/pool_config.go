@@ -67,9 +67,8 @@ func SaveDiscoveredPoolIDs(poolIDs []string, isWeapon bool) error {
 			addedCount++
 		}
 	}
-	if existing.LastUpdate != "" {
-		existing.LastUpdate = time.Now().Format(time.DateTime)
-	}
+
+	existing.LastUpdate = time.Now().Format(time.DateTime)
 
 	if addedCount == 0 {
 		return nil // 没有新增，不需要写入
@@ -102,9 +101,9 @@ func SaveDiscoveredPoolIDs(poolIDs []string, isWeapon bool) error {
 	return nil
 }
 
-// RemoveDiscoveredPoolIDs 从 discovered_pool_ids.json 剔除指定卡池ID（死池清理）。
-// 仅应在 FetchPoolContent 明确返回 404/Pool not found（官方已无此池数据）时调用；
-// 网络超时等临时错误不得调用，防止误杀活池。剔除后原子重写文件（.tmp + rename）。
+// RemoveDiscoveredPoolIDs 从 discovered_pool_ids.json 剔除指定卡池ID（死池清理）
+// 仅应在 FetchPoolContent 明确返回 404/Pool not found（官方无开放此池数据）时调用
+// 网络超时等临时错误不得调用，防止误杀活池，剔除后原子重写文件
 func RemoveDiscoveredPoolIDs(poolIDs []string, isWeapon bool) error {
 	// 先加载现有列表
 	existing, err := LoadDiscoveredPoolIDs()
@@ -141,6 +140,8 @@ func RemoveDiscoveredPoolIDs(poolIDs []string, isWeapon bool) error {
 		return nil // 没有可剔除项，不写文件
 	}
 
+	existing.LastUpdate = time.Now().Format(time.DateTime)
+
 	poolConfigDir, err := getPoolConfigDir()
 	if err != nil {
 		return fmt.Errorf("获取配置目录失败: %v", err)
@@ -152,7 +153,7 @@ func RemoveDiscoveredPoolIDs(poolIDs []string, isWeapon bool) error {
 		return fmt.Errorf("序列化失败: %v", err)
 	}
 
-	// 原子写入：先写 .tmp 再 rename，避免写一半崩溃导致 ID 列表损坏
+	// 先写 .tmp 再 rename，避免写一半崩溃导致 ID 列表损坏
 	tmpPath := configPath + ".tmp"
 	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
 		return fmt.Errorf("写入临时文件失败: %v", err)
@@ -223,7 +224,7 @@ func SavePoolConfig(configList model.PoolConfigList, isWeapon bool) (string, err
 	}
 
 	// 构建现有卡池的去重键集合，用于快速查重
-	// 优先用 PoolID（卡池唯一标识），老数据 PoolID 为空串时回退按 PoolName 匹配
+	// 优先用 PoolID，老数据 PoolID 为空串时回退按 PoolName 匹配
 	existingKeys := make(map[string]bool)
 	for _, pool := range *existingPools {
 		key := pool.PoolID
@@ -241,7 +242,8 @@ func SavePoolConfig(configList model.PoolConfigList, isWeapon bool) (string, err
 		newPools = configList.CharPools
 	}
 
-	// 追加不重复的新卡池，去重键：优先 PoolID，老数据回退按 PoolName
+	// 追加不重复的新卡池，去除重复键值
+	// 优先 PoolID，老数据回退按 PoolName
 	addedCount := 0
 	for _, newPool := range newPools {
 		key := newPool.PoolID

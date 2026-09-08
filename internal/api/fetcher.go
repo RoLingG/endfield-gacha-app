@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -27,6 +28,9 @@ const (
 	AppCodeEndfield    = "endfield"
 	AppCodeLogin       = "be36d44aa36bfb5b"
 )
+
+// ErrPoolNotFound 官方死池清理判定，网络超时等临时错误不触发。
+var ErrPoolNotFound = errors.New("pool not found")
 
 // gachaSession 通用上下文信息
 type gachaSession struct {
@@ -62,16 +66,19 @@ func (s *gachaSession) get(ctx context.Context, targetURL string, queryParams ur
 	return io.ReadAll(resp.Body)
 }
 
+// paginationRequest 一次分页抓取所需的全部配置。
+// 入参数量较多，按规范封装为结构体便于整体传递与维护。
+type paginationRequest[T model.GachaItem] struct {
+	session     *gachaSession
+	baseURL     string
+	refererPage string
+	knownSeqIDs map[string]struct{}
+	buildParams func(seqID string) url.Values
+	parseList   func(body []byte) (items []T, hasMore bool, nextSeqID string, err error)
+}
+
 // fetchPaginated 通用分页抓取，循环请求直到获取数据的 hasMore 为 false
-func fetchPaginated[T model.GachaItem](
-	ctx context.Context,
-	sess *gachaSession,
-	baseURL string,
-	refererPage string,
-	knownSeqIDs map[string]struct{},
-	buildParams func(seqID string) url.Values,
-	parseList func(body []byte) (items []T, hasMore bool, nextSeqID string, err error),
-) ([]T, error) {
+func fetchPaginated[T model.GachaItem](ctx context.Context, req paginationRequest[T]) ([]T, error) {
 	var list []T
 	seqID := ""
 	for {
@@ -83,8 +90,8 @@ func fetchPaginated[T model.GachaItem](
 
 		var raw json.RawMessage
 		err := retry.DoWithContext(ctx, func() error {
-			params := buildParams(seqID)
-			body, err := sess.get(ctx, baseURL, params, refererPage)
+			params := req.buildParams(seqID)
+			body, err := req.session.get(ctx, req.baseURL, params, req.refererPage)
 			if err != nil {
 				return err
 			}
@@ -95,16 +102,16 @@ func fetchPaginated[T model.GachaItem](
 			return nil, fmt.Errorf("获取数据失败: %v", err)
 		}
 
-		items, hasMore, next, err := parseList(raw)
+		items, hasMore, next, err := req.parseList(raw)
 		if err != nil {
 			return nil, err
 		}
 		list = append(list, items...)
 		// 增量早停：整页记录均已已知 → 后续页只会更旧，无需继续翻页
-		if knownSeqIDs != nil && hasMore && len(items) > 0 {
+		if req.knownSeqIDs != nil && hasMore && len(items) > 0 {
 			allKnown := true
 			for _, item := range items {
-				if _, ok := knownSeqIDs[item.GetSeqID()]; !ok {
+				if _, ok := req.knownSeqIDs[item.GetSeqID()]; !ok {
 					allKnown = false
 					break
 				}
@@ -188,10 +195,13 @@ func FetchCharDataAll(ctx context.Context, token, serverID, lang string, knownSe
 }
 
 func fetchCharDataFromPool(ctx context.Context, sess *gachaSession, poolType string, knownSeqIDs map[string]struct{}) ([]model.EndFieldCharInfo, error) {
-	return fetchPaginated(ctx, sess, BaseUrlChar, "gacha_char",
-		knownSeqIDs,
+	return fetchPaginated(ctx, paginationRequest[model.EndFieldCharInfo]{
+		session:     sess,
+		baseURL:     BaseUrlChar,
+		refererPage: "gacha_char",
+		knownSeqIDs: knownSeqIDs,
 		// 构造角色池请求参数
-		func(seqID string) url.Values {
+		buildParams: func(seqID string) url.Values {
 			params := url.Values{}
 			params.Set("lang", sess.Lang)
 			params.Set("token", sess.Token)
@@ -203,7 +213,7 @@ func fetchCharDataFromPool(ctx context.Context, sess *gachaSession, poolType str
 			return params
 		},
 		// 解析角色池响应
-		func(body []byte) ([]model.EndFieldCharInfo, bool, string, error) {
+		parseList: func(body []byte) ([]model.EndFieldCharInfo, bool, string, error) {
 			var apiResp model.EndFieldGachaResponse
 			if err := json.Unmarshal(body, &apiResp); err != nil {
 				return nil, false, "", err
@@ -216,7 +226,8 @@ func fetchCharDataFromPool(ctx context.Context, sess *gachaSession, poolType str
 				next = apiResp.Data.List[n-1].SeqID
 			}
 			return apiResp.Data.List, apiResp.Data.HasMore, next, nil
-		})
+		},
+	})
 }
 
 type poolResult struct {
@@ -239,10 +250,13 @@ func FetchWeaponDataAll(ctx context.Context, token, serverID, lang string, known
 	var allData []model.EndFieldWeaponInfo
 	successCount := 0
 
-	// 并发获取卡池详情数据
+	// 并发获取卡池详情数据，并发上限为 5，避免卡池增多后瞬时并发过高触发官方限流
+	sem := make(chan struct{}, 5)
 	poolCh := make(chan poolResult, len(pools))
 	for _, pool := range pools {
 		go func(poolID, poolName string) {
+			sem <- struct{}{}                                                  // 获取令牌，满了则阻塞等待
+			defer func() { <-sem }()                                           // 抓取完成后释放令牌
 			data, err := fetchWeaponDataByPool(ctx, sess, poolID, knownSeqIDs) // 透传早停集合
 			poolCh <- poolResult{poolName: poolName, data: data, err: err}
 		}(pool.PoolID, pool.PoolName)
@@ -310,10 +324,13 @@ func fetchWeaponPoolList(ctx context.Context, sess *gachaSession) ([]model.EndFi
 
 // fetchWeaponDataByPool 获取特定卡池的抽卡记录
 func fetchWeaponDataByPool(ctx context.Context, sess *gachaSession, poolID string, knownSeqIDs map[string]struct{}) ([]model.EndFieldWeaponInfo, error) {
-	list, err := fetchPaginated(ctx, sess, BaseUrlWeapon, "gacha_weapon",
-		knownSeqIDs,
+	list, err := fetchPaginated(ctx, paginationRequest[model.EndFieldWeaponInfo]{
+		session:     sess,
+		baseURL:     BaseUrlWeapon,
+		refererPage: "gacha_weapon",
+		knownSeqIDs: knownSeqIDs,
 		// 构造武器池请求参数
-		func(seqID string) url.Values {
+		buildParams: func(seqID string) url.Values {
 			params := url.Values{}
 			params.Set("lang", sess.Lang)
 			params.Set("token", sess.Token)
@@ -325,7 +342,7 @@ func fetchWeaponDataByPool(ctx context.Context, sess *gachaSession, poolID strin
 			return params
 		},
 		// 解析武器池响应
-		func(body []byte) ([]model.EndFieldWeaponInfo, bool, string, error) {
+		parseList: func(body []byte) ([]model.EndFieldWeaponInfo, bool, string, error) {
 			var apiResp model.EndFieldWeaponResponse
 			if err := json.Unmarshal(body, &apiResp); err != nil {
 				return nil, false, "", err
@@ -338,7 +355,8 @@ func fetchWeaponDataByPool(ctx context.Context, sess *gachaSession, poolID strin
 				next = apiResp.Data.List[n-1].SeqID
 			}
 			return apiResp.Data.List, apiResp.Data.HasMore, next, nil
-		})
+		},
+	})
 	if err != nil {
 		return nil, fmt.Errorf("获取武器池 %s 数据失败: %v", poolID, err)
 	}
@@ -525,7 +543,7 @@ func GetUIDByU8Token(u8Token string, serverId string) (string, error) {
 	return result.Data.Uid, nil
 }
 
-// FetchPoolContent 获取卡池详情（不需要token）
+// FetchPoolContent 获取卡池详情
 func FetchPoolContent(poolID, serverID, lang string) (*model.PoolContentResponse, error) {
 	params := url.Values{}
 	params.Set("lang", lang)
@@ -554,6 +572,9 @@ func FetchPoolContent(poolID, serverID, lang string) (*model.PoolContentResponse
 	}
 
 	if result.Code != 0 {
+		if result.Msg == "Pool not found" {
+			return nil, fmt.Errorf("卡池 %s 不存在: %w", poolID, ErrPoolNotFound)
+		}
 		return nil, fmt.Errorf("API Error: %s", result.Msg)
 	}
 

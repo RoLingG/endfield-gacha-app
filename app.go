@@ -10,6 +10,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -246,22 +247,28 @@ func (a *App) LoginAndFetchPlayers(shortToken string) (LoginResponse, error) {
 	}, nil
 }
 
-// SyncDataByChoice 前端选好角色后，手动同步数据
-func (a *App) SyncDataByChoice(hgToken string, uid string, serverType string) (string, error) {
-	logger.Log.Info("Frontend requested: SyncDataByChoice", zap.String("uid", uid), zap.String("server", serverType))
+// SyncDataByChoice 前端选好角色后，手动同步数据。
+// fullSync 为 true 时跳过增量早停，强制全量抓取（官方分页行为变化导致增量漏抓时的手动兜底）。
+func (a *App) SyncDataByChoice(hgToken string, uid string, serverType string, fullSync bool) (string, error) {
+	logger.Log.Info("Frontend requested: SyncDataByChoice",
+		zap.String("uid", uid), zap.String("server", serverType), zap.Bool("full_sync", fullSync))
 	u8Token, err := api.GetU8Token(hgToken, uid)
 	if err != nil {
 		return "", err
 	}
-	return a.internalFetchAndSave(u8Token, "1", "zh-cn", uid, serverType)
+	return a.internalFetchAndSave(u8Token, "1", "zh-cn", uid, serverType, fullSync)
 }
 
-// internalFetchAndSave 内部同步逻辑
-func (a *App) internalFetchAndSave(token, serverID, lang string, uid string, serverType string) (string, error) {
+// internalFetchAndSave 内部同步逻辑。
+// fullSync 为 true 时 knownSeqIDs 传 nil（即冷启动全量抓取路径），用于手动兜底。
+func (a *App) internalFetchAndSave(token, serverID, lang string, uid string, serverType string, fullSync bool) (string, error) {
 	ctx := a.startCancellableOperation()
 	defer a.clearCancelFunc()
 	wailsRuntime.EventsEmit(a.ctx, "fetch-progress", "正在抓取角色数据...")
-	charKnown := storage.LoadKnownSeqIDs[model.EndFieldCharInfo](uid, serverType, model.PoolTypeChar)
+	var charKnown map[string]struct{}
+	if !fullSync {
+		charKnown = storage.LoadKnownSeqIDs[model.EndFieldCharInfo](uid, serverType, model.PoolTypeChar)
+	}
 	charData, err := api.FetchCharDataAll(ctx, token, serverID, lang, charKnown)
 	if err != nil {
 		return "", fmt.Errorf("角色记录抓取失败: %v", err)
@@ -271,7 +278,10 @@ func (a *App) internalFetchAndSave(token, serverID, lang string, uid string, ser
 		logger.Log.Warn("Character save warning", zap.Error(err))
 	}
 	wailsRuntime.EventsEmit(a.ctx, "fetch-progress", "正在抓取武器数据...")
-	weaponKnown := storage.LoadKnownSeqIDs[model.EndFieldWeaponInfo](uid, serverType, model.PoolTypeWeapon)
+	var weaponKnown map[string]struct{}
+	if !fullSync {
+		weaponKnown = storage.LoadKnownSeqIDs[model.EndFieldWeaponInfo](uid, serverType, model.PoolTypeWeapon)
+	}
 	weaponData, err := api.FetchWeaponDataAll(ctx, token, serverID, lang, weaponKnown)
 	if err != nil {
 		return "", fmt.Errorf("武器记录抓取失败: %v", err)
@@ -632,7 +642,7 @@ func (a *App) UpdatePoolConfig() (string, error) {
 			logger.Log.Warn("Failed to fetch char pool content",
 				zap.String("pool_id", poolID),
 				zap.Error(err))
-			if strings.Contains(err.Error(), "Pool not found") {
+			if errors.Is(err, api.ErrPoolNotFound) {
 				deadCharPoolIDs = append(deadCharPoolIDs, poolID)
 			}
 			continue
@@ -668,7 +678,7 @@ func (a *App) UpdatePoolConfig() (string, error) {
 			logger.Log.Warn("Failed to fetch weapon pool content",
 				zap.String("pool_id", poolID),
 				zap.Error(err))
-			if strings.Contains(err.Error(), "Pool not found") {
+			if errors.Is(err, api.ErrPoolNotFound) {
 				deadWeaponPoolIDs = append(deadWeaponPoolIDs, poolID)
 			}
 			continue
@@ -690,7 +700,7 @@ func (a *App) UpdatePoolConfig() (string, error) {
 			}
 		}
 		weaponConfigs = append(weaponConfigs, config)
-		time.Sleep(300 * time.Millisecond) // 池间间隔，避免频繁访问官方服务器
+		time.Sleep(200 * time.Millisecond)
 	}
 
 	// 放在循环后而非循环内，避免边遍历边修改文件带来的不一致。

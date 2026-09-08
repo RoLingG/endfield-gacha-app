@@ -130,7 +130,7 @@ export async function doTokenSync(player) {
   showLoadingState(t('login.status.syncing'), `UID: ${player.uid} // ${serverName.toUpperCase()}`);
   setFetchingState(true);
   try {
-    const res = await SyncDataByChoice(getCachedHgToken(), player.uid, serverName);
+    const res = await SyncDataByChoice(getCachedHgToken(), player.uid, serverName, false);
     if (res === "success") {
       await dataLoader(true, serverName, player.uid);
     } else {

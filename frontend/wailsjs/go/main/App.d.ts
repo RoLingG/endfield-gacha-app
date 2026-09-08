@@ -33,7 +33,7 @@ export function OpenOfficialLoginWindow():Promise<main.LoginResponse>;
 
 export function ReloadFrontend():Promise<void>;
 
-export function SyncDataByChoice(arg1:string,arg2:string,arg3:string):Promise<string>;
+export function SyncDataByChoice(arg1:string,arg2:string,arg3:string,arg4:boolean):Promise<string>;
 
 export function UpdatePoolConfig():Promise<string>;
 
