@@ -3,24 +3,34 @@ import { destroyStatsCharts } from './render/chart.js';
 import { SNACKBAR_AUTO_CLOSE, JADE_PER_PULL, JADE_PER_STONE, WEAPON_QUOTA_PER_TEN,
          WEAPON_QUOTA_6STAR, WEAPON_QUOTA_5STAR, WEAPON_QUOTA_4STAR } from './constants.js';
 
-// mdui Snackbar封装
+// Snackbar 通知封装
 export function showAppSnackbar({
   message = "",
   type = "info",
   autoCloseDelay = SNACKBAR_AUTO_CLOSE,
   closeable = false,
 } = {}) {
-  const snackbar = document.createElement("mdui-snackbar");
-  snackbar.className = `app-snackbar app-snackbar--${type}`;
-  snackbar.textContent = message;
-  snackbar.closeable = closeable;
-  document.body.appendChild(snackbar);
-  snackbar.open = true;
-  const cleanup = () => {
-    if (snackbar.parentNode) snackbar.remove();
+  const el = document.createElement("div");
+  el.className = `app-snackbar app-snackbar--${type}`;
+  el.textContent = message;
+
+  // 关闭函数，先播放退场动画，动画结束后移除 DOM
+  const dismiss = () => {
+    el.classList.add("app-snackbar--out");
+    el.addEventListener("animationend", () => el.remove(), { once: true });
   };
-  snackbar.addEventListener("closed", cleanup, { once: true });
-  return snackbar;
+
+  const timer = setTimeout(dismiss, autoCloseDelay);
+  if (closeable) {
+    el.style.cursor = "pointer";
+    el.addEventListener("click", () => {
+      clearTimeout(timer);
+      dismiss();
+    });
+  }
+
+  document.body.appendChild(el);
+  return el;
 }
 
 export function setFetchingState(fetching) {

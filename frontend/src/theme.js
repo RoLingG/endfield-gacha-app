@@ -104,7 +104,11 @@ export function initThemeToggle() {
   btn.addEventListener("click", () => {
     const next = document.body.classList.contains("theme-day") ? "night" : "day";
     localStorage.setItem(getThemeStorageKey(), next);
-    applyTheme(next);
+    if (document.startViewTransition) {
+      document.startViewTransition(() => { applyTheme(next); });
+    } else {
+      applyTheme(next);
+    }
     if (typeof window.onThemeChanged === "function") {
       window.onThemeChanged(next);
     }
