@@ -2,6 +2,10 @@ import { calculatePoolStats, calculateSparkInfo, calculatePityBoost, calculatePe
 import { getCurrentType, getLastDataType, getGlobalPoolConfig, getGlobalCharPoolOrder, getGlobalWeaponPoolOrder } from '../state.js';
 import { updateCurrencyDisplay } from '../utils.js';
 import { t } from '../i18n.js';
+import { PITY_BOOST_START } from '../constants.js';
+
+let prevPityPct = null;
+let prevPityColor = null;
 
 export function createSummaryStrip(dataMap, poolName) {
   const items = dataMap[poolName] || [];
@@ -33,12 +37,19 @@ export function createSummaryStrip(dataMap, poolName) {
   }
 
   const pityBoost = calculatePityBoost(currentPity, poolId, isWeapon);
+  const pityPct = Math.min((currentPity / pityCount) * 100, 100);
+  const pityBarColor = currentPity >= pityCount ? '#ff3b30'
+    : (!isWeapon && currentPity >= PITY_BOOST_START) ? '#ff8c1a'
+    : 'var(--ef-yellow)';
   const typeLabel = isWeapon ? t('summary.weapons') : t('summary.characters');
   document.getElementById('summaryStrip').innerHTML = `
     <div class="info-card">
       <div class="info-label">${t('summary.currentPity')}</div>
       <div class="info-value" style="color:${pityBoost.pityColor}">
         ${currentPity} <span style="font-size:12px;color:#666">/ ${pityCount}</span>
+      </div>
+      <div class="pity-bar">
+        <div class="pity-bar-fill" style="width:${pityPct}%; background:${pityBarColor};"></div>
       </div>
       <div class="info-sub">${pityBoost.pitySubText}</div>
     </div>
@@ -57,6 +68,19 @@ export function createSummaryStrip(dataMap, poolName) {
       <div class="info-sub">${sixStarCount} ${typeLabel}</div>
     </div>
   `;
+  // 切池时 fill 随 strip 整体重建，先设旧值再 reflow 到新值，让宽度/颜色平滑过渡
+  const fill = document.getElementById('summaryStrip').querySelector('.pity-bar-fill');
+  if (fill) {
+    if (prevPityPct !== null) {
+      fill.style.width = `${prevPityPct}%`;
+      fill.style.background = prevPityColor;
+      void fill.offsetWidth;
+    }
+    fill.style.width = `${pityPct}%`;
+    fill.style.background = pityBarColor;
+  }
+  prevPityPct = pityPct;
+  prevPityColor = pityBarColor;
   updateCurrencyDisplay(notFreeTotal, currentType, { six: sixStarCount, five: fiveStarCount, four: fourStarCount });
 }
 

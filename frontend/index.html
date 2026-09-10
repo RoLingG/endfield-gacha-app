@@ -1311,6 +1311,24 @@
         right: 15px;
     }
 
+    .info-card .pity-bar {
+        position: absolute;
+        left: 18px;
+        bottom: 14px;
+        width: 80px;
+        height: 3px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.12);
+        overflow: hidden;
+    }
+
+    .info-card .pity-bar-fill {
+        display: block;
+        height: 100%;
+        width: 0;
+        transition: width 0.45s ease-out, background 0.45s ease-out;
+    }
+
     /* Dashboard 仪表盘 */
     .dashboard-panel {
         width: 90%;
@@ -1968,6 +1986,10 @@
 
     .theme-day .info-sub {
         color: #777;
+    }
+
+    .theme-day .pity-bar {
+        background: #e0e0d8;
     }
 
     .theme-day .dashboard-panel {
