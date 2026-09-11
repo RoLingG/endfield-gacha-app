@@ -118,6 +118,13 @@
   "stats.monthlyTrend": "[ MONTHLY TREND // 月度趋势 ]",
   "stats.total6Star": "共 {count} 个 6★",
   "stats.currentDrought": "当前连续 {count} 抽未出 6★",
+  "stats.luckEmp": "欧皇",
+  "stats.luckAbove": "偏欧",
+  "stats.luckNormal": "平平无奇",
+  "stats.luckBelow": "偏非",
+  "stats.luckBad": "非酋",
+  "stats.luckSpeedPrefix": "出货",
+  "stats.luckUpPrefix": "UP",
 
   "rare.recent6Char": "RECENT 6★ CHARACTERS",
   "rare.recent6Weapon": "RECENT 6★ WEAPONS",

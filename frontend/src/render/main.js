@@ -7,7 +7,7 @@ import {
   getGlobalPoolConfig, getComingFromStats, setComingFromStats,
 } from '../state.js';
 import { createPoolButtons } from '../pool.js';
-import { mergeAllPoolsData, calculateAvgPity, calculateMaxDrought, calculateMonthlyStats, calculatePityDistribution } from '../data.js';
+import { mergeAllPoolsData, calculateAvgPity, calculateMaxDrought, calculateMonthlyStats, calculatePityDistribution, calculateLuckLevel, calculateUpLevel, calculateUpCount } from '../data.js';
 import { updateOrCreateChart, renderPityDistributionChart, renderMonthlyTrendChart, destroyStatsCharts } from './chart.js';
 import { createSummaryStrip, createAllPoolsSummaryStrip } from './summary.js';
 import { createRareRecordCard, createAllPoolsRareRecordsCard } from './rare.js';
@@ -280,17 +280,29 @@ function renderStatsContent(items, isAllPools) {
     return;
   }
 
+  const poolConfig = getGlobalPoolConfig() || {};
+  const isWeapon = getLastDataType() === 'weapon';
+
   // 统计卡片
   const avg = calculateAvgPity(items);
   const drought = calculateMaxDrought(items);
   if (statsCardsRow) {
+    let avgSub = t('stats.total6Star', { count: avg.sixStarCount });
+    if (isAllPools) {
+      const speedKey = calculateLuckLevel(avg.avgPity, avg.sixStarCount, isWeapon);
+      const upCount = calculateUpCount(items, poolConfig);
+      const upKey = calculateUpLevel(upCount, avg.sixStarCount, isWeapon);
+      const tags = [];
+      if (speedKey) tags.push(`${t('stats.luckSpeedPrefix')} ${t(speedKey)}`);
+      if (upKey) tags.push(`${t('stats.luckUpPrefix')} ${t(upKey)}`);
+      if (tags.length) avgSub = `${avgSub} · ${tags.join(' · ')}`;
+    }
     statsCardsRow.innerHTML =
-      createStatCard(t('stats.avgPity'), avg.avgPity, t('stats.total6Star', { count: avg.sixStarCount })) +
+      createStatCard(t('stats.avgPity'), avg.avgPity, avgSub) +
       createStatCard(t('stats.maxDrought'), drought.maxDrought, t('stats.currentDrought', { count: drought.currentDrought }));
   }
 
   // 抽数分布图（始终显示）
-  const poolConfig = getGlobalPoolConfig() || {};
   const distribution = calculatePityDistribution(items, poolConfig);
   if (pityDistContainer) pityDistContainer.style.display = '';
   renderPityDistributionChart(distribution);

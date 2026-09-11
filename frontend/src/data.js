@@ -1,4 +1,4 @@
-import { SPARK_TIER1, SPARK_TIER2, PITY_BOOST_START, CHAR_BASE_RATE, CHAR_HARD_PITY } from './constants.js';
+import { SPARK_TIER1, SPARK_TIER2, PITY_BOOST_START, CHAR_BASE_RATE, CHAR_HARD_PITY, CHAR_PITY_MU, CHAR_PITY_SIGMA, WEAPON_PITY_MU, WEAPON_PITY_SIGMA, CHAR_UP_RATE, WEAPON_UP_RATE } from './constants.js';
 import {getGlobalCharPoolOrder, getGlobalWeaponPoolOrder} from "./state";
 
 export const DEFAULT_EMPTY_POOL_STATS = {
@@ -449,4 +449,40 @@ export function calculatePityDistribution(items, poolConfig = {}) {
     upCounts: upBuckets,
     offCounts: offBuckets
   };
+}
+
+// 6★ 出货欧非评定函数，按平均出货抽数相对理论期望的 z 分数分档 6★，少于 3 个 6★ 返回 null
+export function calculateLuckLevel(avgPity, sixStarCount, isWeapon) {
+  if (sixStarCount < 3) return null;
+  const mu = isWeapon ? WEAPON_PITY_MU : CHAR_PITY_MU;
+  const sigma = isWeapon ? WEAPON_PITY_SIGMA : CHAR_PITY_SIGMA;
+  const z = (avgPity - mu) / (sigma / Math.sqrt(sixStarCount));
+  if (z < -1.5) return 'stats.luckEmp';
+  if (z < -0.5) return 'stats.luckAbove';
+  if (z < 0.5) return 'stats.luckNormal';
+  if (z < 1.5) return 'stats.luckBelow';
+  return 'stats.luckBad';
+}
+
+// UP 命中率欧非评定函数，出 6★ 时命中 UP 的比例相对理论占比的 z 分数分档（方向与出货速度相反，z 越大越欧）
+export function calculateUpLevel(upCount, sixStarCount, isWeapon) {
+  if (sixStarCount < 3) return null;
+  const p = isWeapon ? WEAPON_UP_RATE : CHAR_UP_RATE;
+  const z = (upCount / sixStarCount - p) / Math.sqrt(p * (1 - p) / sixStarCount);
+  if (z > 1.5) return 'stats.luckEmp';
+  if (z > 0.5) return 'stats.luckAbove';
+  if (z > -0.5) return 'stats.luckNormal';
+  if (z > -1.5) return 'stats.luckBelow';
+  return 'stats.luckBad';
+}
+
+// 统计命中 UP 的 6★ 数量（用于 UP 命中率欧非）
+export function calculateUpCount(items, poolConfig = {}) {
+  let upCount = 0;
+  for (const item of items) {
+    if (!isDraw(item) || item.rarity !== 6) continue;
+    const upName = poolConfig[item.poolName];
+    if (upName && getItemName(item) === upName) upCount++;
+  }
+  return upCount;
 }
