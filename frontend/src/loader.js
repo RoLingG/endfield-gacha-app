@@ -1,12 +1,10 @@
 import {
-  LoadGachaTokens, CheckLocalFiles, GetCharacterData, GetWeaponData,
-  LoadLocalGachaHistory, DeleteLocalGachaHistory, ImportTemporaryJson,
+  CheckLocalFiles, LoadLocalGachaHistory, DeleteLocalGachaHistory, ImportTemporaryJson,
 } from "../wailsjs/go/main/App";
 
 import {
   setCurrentUid, setCurrentServerType, setGlobalCharData,
-  setGlobalWeaponData, setCurrentType, setIsOfflineSelection,
-  getIsOfflineSelection, setTempExportData,
+  setGlobalWeaponData, setCurrentType, setTempExportData,
 } from './state.js';
 import { SNACKBAR_AUTO_CLOSE } from './constants.js';
 import { groupDataByPool } from './data.js';
@@ -19,67 +17,6 @@ import { t } from './i18n.js';
 let exitAnimator = null;
 export function setExitAnimator(fn) {
   exitAnimator = fn;
-}
-
-// 双服选择逻辑处理
-export async function onSelectServer(serverName) {
-  const actionText = getIsOfflineSelection() ? t('login.status.loadingArchive') : t('login.status.targetLocked');
-  showLoadingState(actionText, `ACCESSING ${serverName.toUpperCase()} DATABASE...`);
-  try {
-    if (getIsOfflineSelection()) {
-      throw new Error(t('login.error.offlineMissingUid'));
-    } else {
-      await initApp(false, serverName);
-    }
-    setCurrentServerType(serverName);
-  } catch (err) {
-    console.error(err);
-    window.resetToAnalyze();
-    document.getElementById("analyzeError").textContent = "INIT ERROR: " + err;
-  } finally {
-    setIsOfflineSelection(false);
-  }
-}
-
-// 在线分析逻辑处理
-export async function analyze() {
-  const btn = document.getElementById("analyzeBtn");
-  const originalText = btn.textContent;
-
-  btn.textContent = t('login.status.checking');
-  btn.disabled = true;
-  document.getElementById("analyzeError").textContent = "";
-
-  try {
-    const tokens = await LoadGachaTokens();
-    const hasOfficial = tokens.Official && tokens.Official.length > 0;
-    const hasBilibili = tokens.Bilibili && tokens.Bilibili.length > 0;
-
-    if (!hasOfficial && !hasBilibili) {
-      throw t('login.error.noToken');
-    }
-
-    if (hasOfficial && hasBilibili) {
-      document.getElementById("defaultBtnGroup").style.display = "none";
-      document.getElementById("serverSelectArea").style.display = "block";
-      resetButton(btn, originalText);
-      return;
-    }
-
-    let targetServer = "official";
-    if (hasBilibili) targetServer = "bilibili";
-
-    resetButton(btn, originalText);
-
-    showLoadingState(t('login.status.syncing'), `TARGET CONFIRMED: ${targetServer.toUpperCase()}`);
-    await initApp(false, targetServer, "");
-    setCurrentServerType(targetServer);
-
-  } catch (err) {
-    console.error(err);
-    resetButton(btn, originalText);
-    document.getElementById("analyzeError").textContent = "ERR: " + err;
-  }
 }
 
 // 离线分析文件
@@ -99,9 +36,8 @@ export async function loadLocal() {
       const targetServer = targetArchive.servers[0];
       const targetUid = targetArchive.uid;
       resetButton(btn, originalText);
-      setIsOfflineSelection(true);
       showLoadingState(t('login.status.loadingLocalArchive'), `UID: ${targetUid} // ${targetServer.toUpperCase()}`);
-      await initApp(true, targetServer, targetUid);
+      await initApp(targetServer, targetUid);
       return;
     }
     renderLocalArchiveList(archives);
@@ -200,11 +136,10 @@ export function renderLocalArchiveList(archives) {
 // 执行选中的本地加载
 export async function doLocalLoad(uid, serverName) {
   document.getElementById("playerSelectArea").style.display = "none";
-  setIsOfflineSelection(true);
   setCurrentServerType(serverName);
   showLoadingState(t('login.status.loadingLocalDb'), `TARGET: UID ${uid} // ${serverName.toUpperCase()}`);
   try {
-    await initApp(true, serverName, uid);
+    await initApp(serverName, uid);
   } catch (err) {
     console.error(err);
     window.resetToAnalyze();
@@ -258,72 +193,15 @@ export async function handleImportTemp() {
   }
 }
 
-export async function initApp(isOfflineMode, serverName = "official", uid = "") {
-  if (isOfflineMode) {
-    setCurrentUid(uid);
-  } else {
-    setCurrentUid("");
-  }
+// 加载本地存档数据并渲染（uid 为空时读取当前 UID）
+export async function initApp(serverName, uid) {
+  setCurrentUid(uid);
 
   const loadingText = document.querySelector('.loading-text');
-
-  let charDataGrouped, weaponDataGrouped;
-  if (isOfflineMode) {
-    loadingText.textContent = t('login.status.readingLocal');
-    const dataStruct = await LoadLocalGachaHistory(uid, serverName);
-    charDataGrouped = dataStruct.char || {};
-    weaponDataGrouped = dataStruct.weapon || {};
-  } else {
-    loadingText.textContent = t('login.status.fetching');
-    setFetchingState(true);
-
-    let charFetchError = null;
-    let weaponFetchError = null;
-
-    const [charRes, weaponRes] = await Promise.all([
-      GetCharacterData(serverName).catch(e => {
-        charFetchError = e;
-        console.warn("Character data fetch failed:", e);
-        return null;
-      }),
-      GetWeaponData(serverName).catch(e => {
-        weaponFetchError = e;
-        console.warn("Weapon data fetch failed:", e);
-        return null;
-      }),
-    ]);
-
-    const charList = charRes?.list || [];
-    const weaponList = weaponRes?.list || [];
-
-    if (charFetchError && weaponFetchError) {
-      showAppSnackbar({
-        message: `${t('snackbar.charAndWeaponFailed')}: ${charFetchError} / ${weaponFetchError}。`,
-        type: "error",
-        autoCloseDelay: SNACKBAR_AUTO_CLOSE,
-      });
-      window.resetToAnalyze();
-      return;
-    }
-
-    setCurrentUid(charRes?.uid || weaponRes?.uid || "");
-    if (charFetchError || weaponFetchError) {
-      const warningMessages = [];
-      if (charFetchError) {
-        warningMessages.push(t('snackbar.charFailed'));
-      }
-      if (weaponFetchError) {
-        warningMessages.push(t('snackbar.weaponFailed'));
-      }
-      showAppSnackbar({
-        message: "[WARNING] " + warningMessages.join(" / "),
-        type: "warning",
-        autoCloseDelay: SNACKBAR_AUTO_CLOSE,
-      });
-    }
-    charDataGrouped = groupDataByPool(charList);
-    weaponDataGrouped = groupDataByPool(weaponList);
-  }
+  loadingText.textContent = t('login.status.readingLocal');
+  const dataStruct = await LoadLocalGachaHistory(uid, serverName);
+  const charDataGrouped = dataStruct.char || {};
+  const weaponDataGrouped = dataStruct.weapon || {};
 
   try {
     await updatePoolConfigHandler();

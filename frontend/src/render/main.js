@@ -253,14 +253,13 @@ function renderStatsTab() {
     return;
   }
 
-  const poolNames = Object.keys(dataMap);
-  const defaultPool = poolNames[0];
-  renderStatsContent(dataMap[defaultPool], false);
-
-  // 复用主池子选择器，绑定统计回调
+  // 复用主池子选择器，绑定统计选池时回调
   createPoolButtons(dataMap, (dm, poolName) => {
     renderStatsContent(dm[poolName], false);
   }, type);
+
+  // 初始化统计以选择器当前高亮的池为默认池
+  renderStatsContent(dataMap[getCurrentPool()], false);
 }
 
 // 渲染统计内容

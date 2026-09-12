@@ -22,24 +22,12 @@ export function ExportDataDirect(arg1, arg2) {
   return window['go']['main']['App']['ExportDataDirect'](arg1, arg2);
 }
 
-export function GetCharacterData(arg1) {
-  return window['go']['main']['App']['GetCharacterData'](arg1);
-}
-
 export function GetPoolConfig() {
   return window['go']['main']['App']['GetPoolConfig']();
 }
 
-export function GetWeaponData(arg1) {
-  return window['go']['main']['App']['GetWeaponData'](arg1);
-}
-
 export function ImportTemporaryJson() {
   return window['go']['main']['App']['ImportTemporaryJson']();
-}
-
-export function LoadGachaTokens() {
-  return window['go']['main']['App']['LoadGachaTokens']();
 }
 
 export function LoadLocalGachaHistory(arg1, arg2) {

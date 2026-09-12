@@ -85,7 +85,7 @@ export function renderPlayerList(players) {
   container.innerHTML = "";
 
   players.forEach(p => {
-    const isOfficial = p.channelName === t('server.official');
+    const isOfficial = p.isOfficial === true;
     const accentColor = isOfficial ? "var(--ef-yellow)" : "#23ade5";
 
     const card = document.createElement("div");
@@ -132,7 +132,7 @@ export async function doTokenSync(player) {
   try {
     const res = await SyncDataByChoice(getCachedHgToken(), player.uid, serverName, false);
     if (res === "success") {
-      await dataLoader(true, serverName, player.uid);
+      await dataLoader(serverName, player.uid);
     } else {
       document.getElementById("analyzeError").textContent = "SYNC ERR: " + res;
       window.resetToAnalyze();

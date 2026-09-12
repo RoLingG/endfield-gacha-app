@@ -2,42 +2,28 @@ import { calculateSixStarDetails } from '../data.js';
 import { getCurrentType, getGlobalPoolConfig } from '../state.js';
 import { t } from '../i18n.js';
 
-function renderRareItemChip({
-  label,
-  isUpItem,
-  isNewItem,
-  chipBorderColor,
-  chipTextColor,
-  chipBgColor,
-  cornerBadge
-}) {
-  let borderColor, textColor, bgColor;
+function renderRareItemChip({ label, isUpItem, isNewItem, cornerBadge }) {
+  let stateClass = "rare-chip--muted";
   let hasGlowEffect = false;
   if (isUpItem) {
-    borderColor = chipBorderColor;
-    textColor = chipTextColor;
-    bgColor = chipBgColor;
+    stateClass = "rare-chip--up";
     if (isNewItem) {
       hasGlowEffect = true;
     }
   } else if (isNewItem) {
-    borderColor = "#e8a035";
-    textColor = "#e8a035";
-    bgColor = "rgba(255, 235, 59, 0.15)";
-  } else {
-    borderColor = "#666666";
-    textColor = "#888888";
-    bgColor = "#66666619";
+    stateClass = "rare-chip--new";
   }
-  const chipStyle = `padding: 5px 10px; font-size: 12px; font-weight: bold; font-family: 'Consolas'; white-space: nowrap; color: ${textColor}; background: ${bgColor};`;
-  const glowClass = hasGlowEffect ? 'class="glow-up-new"' : '';
+  const glowClass = hasGlowEffect ? "glow-up-new" : "";
+
   if (cornerBadge) {
-    return `<span ${glowClass} style="display:inline-flex; align-items:stretch; margin:4px; border:1px solid ${borderColor}; border-radius:3px; overflow:hidden; font-family:'Consolas';">` +
-      `<span style="display:flex; align-items:center; ${chipStyle}">${label}</span>` +
-      `<span style="display:flex; align-items:center; padding:5px 8px; background:${bgColor}; color:${textColor}; font-size:11px; font-weight:bold; border-left:1px solid ${borderColor}; white-space:nowrap;">+${cornerBadge}</span>` +
+    return `<span class="rare-chip rare-chip--split ${stateClass} ${glowClass}">` +
+      `<span class="rare-chip__label">${label}</span>` +
+      `<span class="rare-chip__badge">+${cornerBadge}</span>` +
       `</span>`;
   }
-  return `<span ${glowClass} style="display:inline-block; margin:4px; border:1px solid ${borderColor}; border-radius:3px; ${chipStyle}">${label}</span>`;
+  return `<span class="rare-chip ${stateClass} ${glowClass}">` +
+    `<span class="rare-chip__label">${label}</span>` +
+    `</span>`;
 }
 
 function renderRareRecordsCard(options) {
@@ -58,9 +44,6 @@ function renderRareRecordsCard(options) {
   const textStrong = "var(--ef-text-strong)";
   const textMuted = "var(--ef-text-muted)";
   const emptyColor = "var(--ef-empty)";
-  const chipBorderColor = "var(--ef-chip-border)";
-  const chipTextColor = "var(--ef-chip-text)";
-  const chipBgColor = "var(--ef-chip-bg)";
 
   const chipsHtml = sixStarDetails.map(item => {
     const upCharName = getUpCharName ? getUpCharName(item) : null;
@@ -69,7 +52,6 @@ function renderRareRecordsCard(options) {
       label: getChipLabel(item),
       isUpItem,
       isNewItem: item.isNew,
-      chipBorderColor, chipTextColor, chipBgColor,
       cornerBadge: item.inheritedPity
     });
   }).join("");

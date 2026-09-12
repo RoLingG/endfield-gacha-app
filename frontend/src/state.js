@@ -1,5 +1,4 @@
 // 窗口状态
-let isOfflineSelection = false;
 let isFetching = false;
 
 // 认证状态
@@ -9,7 +8,7 @@ let currentServerType = "";
 
 // 筛选状态
 let filterSearchText = "";  // 搜索关键词
-let filterRarity = 0;   // 0: 全部，3/4/5/6: 指定稀有度
+let filterRarity = 0;   // 0: 全部，4/5/6: 指定稀有度
 let filterIsFree = -1;  // -1: 不筛选, 0: 非免费, 1: 免费
 let comingFromStats = false;
 
@@ -49,9 +48,6 @@ let tempExportData = null;
 // ============================================
 // Exported Getters & Setters
 // ============================================
-
-export function getIsOfflineSelection() { return isOfflineSelection; }
-export function setIsOfflineSelection(v) { isOfflineSelection = v; }
 
 export function getIsFetching() { return isFetching; }
 export function setIsFetching(v) { isFetching = v; }

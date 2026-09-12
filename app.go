@@ -12,7 +12,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -28,10 +27,9 @@ import (
 
 // App struct
 type App struct {
-	ctx          context.Context
-	cachedTokens model.ServerTokens
-	cancelFunc   context.CancelFunc
-	mu           sync.Mutex
+	ctx        context.Context
+	cancelFunc context.CancelFunc
+	mu         sync.Mutex
 }
 
 // NewApp creates a new App application struct
@@ -292,159 +290,6 @@ func (a *App) internalFetchAndSave(token, serverID, lang string, uid string, ser
 	}
 	wailsRuntime.EventsEmit(a.ctx, "fetch-progress", "数据同步完成！")
 	return "success", nil
-}
-
-// ================= Token Scanning (Log Mode) =================
-
-// LoadGachaTokens 扫描日志获取 Token
-func (a *App) LoadGachaTokens() (model.ServerTokens, error) {
-	logger.Log.Info("Frontend requested: LoadGachaTokens")
-
-	tokens, err := api.ScanLogForTokens()
-	if err != nil {
-		logger.Log.Error("Token scan failed", zap.Error(err))
-		a.mu.Lock()
-		a.cachedTokens = model.ServerTokens{}
-		a.mu.Unlock()
-		return model.ServerTokens{}, fmt.Errorf("扫描失败: %v。请先在游戏中打开抽卡历史记录。", err)
-	}
-
-	logger.Log.Info("Tokens loaded successfully",
-		zap.Bool("official_found", tokens.Official != ""),
-		zap.Bool("bilibili_found", tokens.Bilibili != ""),
-	)
-
-	// 更新 App 内部缓存
-	a.mu.Lock()
-	a.cachedTokens = tokens
-	a.mu.Unlock()
-	return tokens, nil
-}
-
-// ================= Fetch Data (Log Mode) =================
-
-// GetCharacterData 获取并保存角色数据
-func (a *App) GetCharacterData(serverType string) (FetchDataResponse[model.EndFieldCharInfo], error) {
-	return fetchData(a, FetchDataType[model.EndFieldCharInfo]{
-		ServerType: serverType,
-		LogAction:  "GetCharacterData",
-		Category:   model.PoolTypeChar,
-		FetchFunc:  api.FetchCharDataAll,
-	})
-}
-
-// GetWeaponData 获取并保存武器数据
-func (a *App) GetWeaponData(serverType string) (FetchDataResponse[model.EndFieldWeaponInfo], error) {
-	return fetchData(a, FetchDataType[model.EndFieldWeaponInfo]{
-		ServerType: serverType,
-		LogAction:  "GetWeaponData",
-		Category:   model.PoolTypeWeapon,
-		FetchFunc:  api.FetchWeaponDataAll,
-	})
-}
-
-// FetchDataType 获取数据请求体
-type FetchDataType[T model.GachaItem] struct {
-	ServerType string
-	LogAction  string
-	Category   string
-	FetchFunc  func(ctx context.Context, token, serverID, lang string, knownSeqIDs map[string]struct{}) ([]T, error)
-}
-type FetchDataResponse[T model.GachaItem] struct {
-	Uid  string `json:"uid"`
-	List []T    `json:"list"`
-}
-
-// fetchData 获取数据(Char or Weapon)
-func fetchData[T model.GachaItem](a *App, req FetchDataType[T]) (FetchDataResponse[T], error) {
-	logger.Log.Info("Frontend requested: "+req.LogAction, zap.String("server", req.ServerType))
-	ctx := a.startCancellableOperation()
-	defer a.clearCancelFunc()
-	wailsRuntime.EventsEmit(a.ctx, "fetch-progress", "正在解析 Token...")
-	token, serverID, lang, err := a.prepareFetchParams(req.ServerType)
-	if err != nil {
-		return FetchDataResponse[T]{}, err
-	}
-	wailsRuntime.EventsEmit(a.ctx, "fetch-progress", "正在获取 UID...")
-	uid, err := api.GetUIDByU8Token(token, serverID)
-	if err != nil {
-		logger.Log.Error("Failed to resolve UID from Token", zap.Error(err))
-		return FetchDataResponse[T]{}, err
-	}
-	dataType := "角色"
-	if req.Category == model.PoolTypeWeapon {
-		dataType = "武器"
-	}
-	wailsRuntime.EventsEmit(a.ctx, "fetch-progress", fmt.Sprintf("正在抓取%s数据...", dataType))
-	known := storage.LoadKnownSeqIDs[T](uid, req.ServerType, req.Category)
-	newData, err := req.FetchFunc(ctx, token, serverID, lang, known)
-	if err != nil {
-		logger.Log.Error("Network request failed", zap.Error(err))
-		return FetchDataResponse[T]{}, fmt.Errorf("数据请求失败: %v", err)
-	}
-	wailsRuntime.EventsEmit(a.ctx, "fetch-progress", fmt.Sprintf("已获取 %d 条记录，正在保存...", len(newData)))
-	mergedData, err := storage.MergeAndSaveData(newData, uid, req.ServerType, req.Category)
-	if err != nil {
-		logger.Log.Error("Failed to save data", zap.Error(err))
-		return FetchDataResponse[T]{Uid: uid, List: newData}, nil
-	}
-	wailsRuntime.EventsEmit(a.ctx, "fetch-progress", fmt.Sprintf("%s数据同步完成！", dataType))
-	return FetchDataResponse[T]{Uid: uid, List: mergedData}, nil
-}
-
-// prepareFetchParams 统一处理从 Token 获取到解析参数的流程
-func (a *App) prepareFetchParams(serverType string) (token, serverID, lang string, err error) {
-	fullURL, err := a.getTokenByServerType(serverType)
-	if err != nil {
-		return "", "", "", err
-	}
-	if fullURL == "" {
-		return "", "", "", fmt.Errorf("未找到 %s 的 Token", serverType)
-	}
-	token, serverID, lang, err = parseParamsFromURL(fullURL)
-	if err != nil {
-		return "", "", "", fmt.Errorf("token 解析失败: %v", err)
-	}
-	return token, serverID, lang, nil
-}
-
-// getTokenByServerType 服务器类型辨识
-func (a *App) getTokenByServerType(serverType string) (string, error) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	switch serverType {
-	case model.ServerOfficial:
-		return a.cachedTokens.Official, nil
-	case model.ServerBilibili:
-		return a.cachedTokens.Bilibili, nil
-	default:
-		return "", fmt.Errorf("无效的服务器类型: %s", serverType)
-	}
-}
-
-// parseParamsFromURL 辅助解析
-func parseParamsFromURL(rawURL string) (token, serverID, lang string, err error) {
-	u, err := url.Parse(rawURL)
-	if err != nil {
-		return "", "", "", fmt.Errorf("URL 解析失败")
-	}
-	q := u.Query()
-	token = q.Get("u8_token")
-	if token == "" {
-		token = q.Get("token")
-	}
-	if token == "" {
-		return "", "", "", fmt.Errorf("URL 中缺少 Token")
-	}
-	serverID = q.Get("server")
-	if serverID == "" {
-		serverID = "1"
-	}
-	lang = q.Get("lang")
-	if lang == "" {
-		lang = "zh-cn"
-	}
-	return token, serverID, lang, nil
 }
 
 // ================= Offline / Local Data =================

@@ -102,19 +102,6 @@ type U8TokenResponse struct {
 	} `json:"data"`
 }
 
-type QueryRoleRequest struct {
-	Token  string `json:"token"`
-	Server int    `json:"server"`
-}
-type QueryRoleResponse struct {
-	Status int    `json:"status"`
-	Msg    string `json:"msg"`
-	Data   struct {
-		Uid     string `json:"uid"`
-		AppCode string `json:"appCode"`
-	} `json:"data"`
-}
-
 type GrantRequest struct {
 	AppCode string `json:"appCode"`
 	Token   string `json:"token"`
@@ -155,11 +142,6 @@ type LocalArchive struct {
 	Timestamp string   `json:"timestamp"`
 	Path      string   `json:"path"`
 	Servers   []string `json:"servers"`
-}
-
-type ServerTokens struct {
-	Official string
-	Bilibili string
 }
 
 // PoolContentResponse 卡池详情接口响应

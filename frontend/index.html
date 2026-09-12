@@ -85,29 +85,11 @@
             <div id="cancelPlayerSelect" style="text-align:center; cursor:pointer; font-size:12px; color:#666;" data-i18n="dialog.cancel">[ CANCEL / 取消 ]</div>
         </div>
 
-        <div id="logModeTips" style="display:none;">
-            <div class="analyze-desc" data-i18n-html="login.logModeTips">> 请确定系统用户路径下终末地的 HGWebview.log 访问权限<br>> 点击按钮开始解析 HGWebview.log 日志文件并初始化记录</div>
-            <div class="analyze-important-desc" data-i18n="login.logModeWarning">> 注意: 需要玩家看过游戏内卡池抽卡记录才会产生相关日志</div>
-        </div>
-        <div class="analyze-divider" style="display: none"></div>
-
-        <!-- 服务器选择区域 (默认隐藏) -->
-        <div id="serverSelectArea" style="display:none; animation: fadeIn 0.5s;">
-            <div class="analyze-important-desc" style="margin-bottom: 12px; border-color: var(--ef-grey); color: var(--ef-yellow);" data-i18n-html="login.serverConflict">
-                > SIGNAL CONFLICT // 检测到多端数据<br>> SELECT YOUR SERVER // 请选择要同步的服务器节点
-            </div>
-            <button id="btnOfficial" class="ef-btn ef-btn-outline" style="margin-bottom: 10px;" data-i18n="login.official">OFFICIAL</button>
-            <button id="btnBilibili" class="ef-btn ef-btn-outline" data-i18n="login.bilibili">BILIBILI</button>
-            <div class="analyze-divider"></div>
-            <div id="cancelServerSelect" style="text-align:center; cursor:pointer; font-size:12px; color:#666;" data-i18n="dialog.cancel">[ CANCEL / 取消 ]</div>
-        </div>
-
         <!-- 按钮组 -->
         <div id="defaultBtnGroup">
             <button id="webTokenBtn" class="ef-btn" style="margin-top: 10px;" data-i18n="login.webTokenSync">WEB TOKEN SYNC</button>
             <button id="localBtn" class="ef-btn ef-btn-outline" style="margin-top: 10px;" data-i18n="login.localInit">LOCAL INITIALIZE</button>
             <button id="importBtn" class="ef-btn ef-btn-outline" style="margin-top: 10px; border-style: dashed;" data-i18n="login.importJson">IMPORT JSON</button>
-            <button id="analyzeBtn" class="ef-btn ef-btn-outline ef-btn-glitch" disabled style="margin-top: 10px" data-text="ONLINE INITIALIZE" data-i18n="login.onlineInit">ONLINE INITIALIZE</button>
         </div>
         <div id="analyzeError"></div>
     </div>
@@ -202,7 +184,6 @@
                     <option value="6">6★</option>
                     <option value="5">5★</option>
                     <option value="4">4★</option>
-                    <option value="3">3★</option>
                 </select>
                 <select id="filterIsFreeSelect">
                     <option value="-1" data-i18n="history.filterAllSimple">ALL</option>
@@ -252,6 +233,9 @@
         --ef-dark-grey: #222;
         --ef-white: #ffffff;
         --ef-grey: #444444;
+        --ef-chip-border: #ff5722;
+        --ef-chip-text: #ff5722;
+        --ef-chip-bg: rgba(255, 87, 34, 0.1);
     }
 
     ::view-transition-old(root),
@@ -460,6 +444,51 @@
 
     .glow-up-new {
         animation: glowCycle 3s ease-in-out infinite;
+    }
+
+    /* 6★ chip 状态色：UP / 新 / 普通 */
+    .rare-chip {
+        display: inline-block;
+        margin: 4px;
+        border: 1px solid var(--chip-border);
+        border-radius: 3px;
+        font-family: 'Consolas';
+    }
+    .rare-chip--split {
+        display: inline-flex;
+        align-items: stretch;
+        overflow: hidden;
+    }
+    .rare-chip__label,
+    .rare-chip__badge {
+        display: flex;
+        align-items: center;
+        padding: 5px 10px;
+        font-size: 12px;
+        font-weight: bold;
+        white-space: nowrap;
+        color: var(--chip-text);
+        background: var(--chip-bg);
+    }
+    .rare-chip__badge {
+        padding: 5px 8px;
+        font-size: 11px;
+        border-left: 1px solid var(--chip-border);
+    }
+    .rare-chip--up {
+        --chip-border: var(--ef-chip-border);
+        --chip-text: var(--ef-chip-text);
+        --chip-bg: var(--ef-chip-bg);
+    }
+    .rare-chip--new {
+        --chip-border: #e8a035;
+        --chip-text: #e8a035;
+        --chip-bg: rgba(255, 235, 59, 0.15);
+    }
+    .rare-chip--muted {
+        --chip-border: #666666;
+        --chip-text: #888888;
+        --chip-bg: #66666619;
     }
 
     /* 基础重置与全局布局 */
@@ -770,19 +799,6 @@
         color: var(--ef-yellow);
         opacity: 0.6;
         pointer-events: none;
-    }
-
-    .theme-day .ef-btn-glitch {
-        border-color: rgba(217, 181, 0, 0.4) !important;
-    }
-
-    .theme-day .ef-btn-glitch::before {
-        opacity: 0.25;
-    }
-
-    .theme-day .ef-btn-glitch::after {
-        color: var(--ef-yellow);
-        opacity: 0.5;
     }
 
     /* 玩家卡片 */
@@ -1729,6 +1745,9 @@
         --ef-dark-grey: #eeeeea;
         --ef-white: #1f1f1f;
         --ef-grey: #cfcfc7;
+        --ef-chip-border: #d45a2a;
+        --ef-chip-text: #d45a2a;
+        --ef-chip-bg: rgba(212, 90, 42, 0.12);
     }
 
     .theme-day .app-snackbar {
@@ -1865,7 +1884,7 @@
     }
 
     .theme-day .ef-btn-glitch::after {
-        color: #6b5a00;
+        color: var(--ef-yellow);
         opacity: 0.5;
     }
 

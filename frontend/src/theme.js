@@ -25,12 +25,11 @@ const themes = {
       "--ef-text-strong": "#1f1f1f",
       "--ef-text-muted": "#777",
       "--ef-divider": "#cfcfc7",
-      "--ef-empty": "#777",
-      "--ef-chip-border": "#d45a2a",
-      "--ef-chip-text": "#d45a2a",
-      "--ef-chip-bg": "rgba(212, 90, 42, 0.12)"
+      "--ef-empty": "#777"
     },
     chartTextColor: "#1f1f1f",
+    charFontFamily: "'Consolas', 'Monaco', monospace",
+    charBorderColor: "#333333"
   },
   night: {
     vars: {
@@ -38,12 +37,11 @@ const themes = {
       "--ef-text-strong": "#cccccc",
       "--ef-text-muted": "#666",
       "--ef-divider": "#333",
-      "--ef-empty": "#444",
-      "--ef-chip-border": "#ff5722",
-      "--ef-chip-text": "#ff5722",
-      "--ef-chip-bg": "rgba(255, 87, 34, 0.1)"
+      "--ef-empty": "#444"
     },
     chartTextColor: "#ffffff",
+    charFontFamily: "'Consolas', 'Monaco', monospace",
+    charBorderColor: "#333333"
   }
 };
 
@@ -68,7 +66,10 @@ export function applyTheme(theme) {
   for (const [key, value] of Object.entries(themeConfig.vars)) {
     rootStyle.setProperty(key, value);
   }
+
   Chart.defaults.color = themeConfig.chartTextColor;
+  Chart.defaults.borderColor = themeConfig.charBorderColor;
+  Chart.defaults.font.family = themeConfig.charFontFamily;
 
   const chartInstance = getGachaChartInstance();
   if (chartInstance) {

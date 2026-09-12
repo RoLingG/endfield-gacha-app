@@ -17,7 +17,7 @@ import { setChartUpdater, setStatsChartUpdater, initThemeToggle } from './theme.
 import { showAppSnackbar, setFetchingState } from './utils.js';
 import { showTokenInputUI, handleOfficialLoginWindow, handleToken, setDataLoader,} from './auth.js';
 import { loadLocale, applyToDOM, t } from './i18n.js';
-import { onSelectServer, loadLocal, handleImportTemp, initApp, setExitAnimator,} from './loader.js';
+import { loadLocal, handleImportTemp, initApp, setExitAnimator,} from './loader.js';
 
 // ============================================
 // 注入回调，打破循环依赖
@@ -26,13 +26,6 @@ setChartUpdater(updateOrCreateChart);
 setStatsChartUpdater(rerenderStatsCharts);
 setExitAnimator(startExitAnimation);
 setDataLoader(initApp);
-
-// ============================================
-// Chart.js 全局配置
-// ============================================
-Chart.defaults.color = '#ffffff';
-Chart.defaults.borderColor = '#333333';
-Chart.defaults.font.family = "'Consolas', 'Monaco', monospace";
 
 // ============================================
 // 窗口控件
@@ -257,7 +250,6 @@ window.resetToAnalyze = function () {
   void analyzeContainer.offsetWidth;
   analyzeContainer.style.opacity = "1";
 
-  document.getElementById("serverSelectArea").style.display = "none";
   document.getElementById("tokenInputArea").style.display = "none";
   document.getElementById("playerSelectArea").style.display = "none";
 
@@ -277,12 +269,6 @@ window.resetToAnalyze = function () {
 
   const defaultBtnGroup = document.getElementById("defaultBtnGroup");
   if (defaultBtnGroup) defaultBtnGroup.style.display = "block";
-
-  const btn = document.getElementById("analyzeBtn");
-  if (btn) {
-    btn.textContent = t('login.onlineInit');
-    btn.disabled = false;
-  }
 
   const localBtn = document.getElementById("localBtn");
   if (localBtn) {
@@ -340,14 +326,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('localBtn')?.addEventListener('click', loadLocal);
   document.getElementById('importBtn')?.addEventListener('click', handleImportTemp);
 
-  // 服务器选择
-  document.getElementById('btnOfficial')?.addEventListener('click', () => onSelectServer('official'));
-  document.getElementById('btnBilibili')?.addEventListener('click', () => onSelectServer('bilibili'));
-
   // 取消按钮（resetToAnalyze）
   document.getElementById('cancelTokenInput')?.addEventListener('click', resetToAnalyze);
   document.getElementById('cancelPlayerSelect')?.addEventListener('click', resetToAnalyze);
-  document.getElementById('cancelServerSelect')?.addEventListener('click', resetToAnalyze);
 
   // 类型切换
   document.getElementById('btnTypeChar')?.addEventListener('click', () => switchType('char'));
@@ -364,13 +345,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     // 输入框内不触发快捷键
     const tag = e.target.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-
-    // Ctrl+R 重置到初始界面
-    if (e.ctrlKey && e.key === 'r') {
-      e.preventDefault();
-      resetToAnalyze();
-      return;
-    }
 
     // 以下快捷键仅在 APP 加载后生效
     const appLoaded = document.getElementById('dashboardPanel')?.style.display !== 'none'
