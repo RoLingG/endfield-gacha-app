@@ -3,7 +3,7 @@
 [![Go Version](https://img.shields.io/badge/Go-%3E%3D1.24-00ADD8.svg)](https://go.dev) ![Wails](https://img.shields.io/badge/Wails-2.0+-C70039.svg) [![Frontend](https://img.shields.io/badge/Frontend-JavaScript-F7DF1E.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript) [![Node](https://img.shields.io/badge/Node-%3E%3D24-green.svg)](LICENSE) [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) ![Release](https://img.shields.io/github/v/release/RoLingG/endfield-gacha-app?style=flat&color=orange) ![Last Commit](https://img.shields.io/github/last-commit/RoLingG/endfield-gacha-app?style=flat&color=purple)
 
 一个极简、安全且具有沉浸式**终末地 (Endfield) 工业风格**的明日方舟官服/B服抽卡记录分析工具。
-基于 Wails 构建，无需上传数据，完全本地解析日志文件，提供良好的数据可视化体验。
+基于 Wails 构建，无需上传数据，完全本地处理数据，提供良好的数据可视化体验。
 
 ![Preview](https://rolingg.top/images/EndField/efaimg1.png)
 
@@ -22,35 +22,32 @@
 ### 📡 多维终端支持 (Multi-Server Support)
 
 - **双服兼容**: 完美支持 **官服** 与 **B服** 账号。
-- **智能识别**: 自动扫描日志，识别当前活跃的服务器 Token。
 - **数据隔离**: 不同服务器的数据独立存储（如 `official_char...` / `bilibili_char...`），互不干扰，支持同一客户端管理多个账号记录。
 
 ### 📊 核心数据分析 (Core Analytics)
 
-> [!CAUTION]
->
-> ⚠️ 目前官方已优化了 **HGWebview.log** 相关日志显示规范，导致 **[ MODE A ] 在线同步** 方式无法使用。
-
 - **多模式启动**:
-  - **[ MODE A ] 在线同步**: 自动解析 `HGWebview.log` 获取最新数据并去重合并。
-  - **[ MODE B ] 离线回溯**: 无需启动游戏，直接读取本地历史存档 (`userdata`)。
-  - **[ MODE C ] Web Token 同步**: 
+  - **[ MODE A ] Web Token 同步**: 
     - **支持内置登录窗口**: 直接在软件内唤起官方登录页，安全快捷获取 Token。
     - **支持手动短 Token**: 兼容从浏览器开发者工具手动获取的 Token。
-    - *注意：**[ MODE C ]** 支持通过 UID 区分同设备内的多个账号。*
-  - **[ MODE D ] 临时导入 Json 文件**: 导入 Json 文件读取数据。
-    - *注意：**[ MODE D ]** 仅支持本软件同步下来的 Json 文件，导入其他软件的 Json 文件可能会出错。*
+    - *注意：**[ MODE A ]** 支持通过 UID 区分同设备内的多个账号。*
+  - **[ MODE B ] 离线回溯**: 无需启动游戏，直接读取本地历史存档 (`userdata`)。
+  - **[ MODE C ] 临时导入 Json 文件**: 导入 Json 文件读取数据。
+    - *注意：**[ MODE C ]** 仅支持本软件同步下来的 Json 文件，导入其他软件的 Json 文件可能会出错。*
 - **可视化仪表盘**:
   - 动态环形图展示 4/5/6 星稀有度分布。
   - 详细的时间轴记录列表与分页查询。
   - 支持终末地特殊的保底机制（80抽保底 / 120、240 井）进度追踪，自动计算是否触发垫刀逻辑。
+
+> [!NOTE]
+>
+> ⚠️ 原先通过解析 **HGWebview.log** 获取 Token 的在线同步方式，因官方调整日志显示规范已永久移除，请使用上述 **[ MODE A ]** 方式。
 
 ### 💾 本地化与隐私 (Local & Privacy)
 
 - **数据落盘**: 所有抽卡记录自动保存为本地 JSON 文件，不经过任何第三方服务器。
 - **原子备份**: 数据会先写入临时文件，意外出错能够保留 `.bak` 备份文件，随时回退到旧版有效记录。
 - **一键管理**: 内置 **[ DATA_FOLDER ]** 指令，快速打开数据存储目录进行备份或管理。
-- **安全解析**: Log 模式下仅读取游戏日志中的 URL Token，零风险操作。
 - **智能归档**: 
   - 自动识别并复用已存在的 UID 目录，避免数据碎片化。
   - 新账号首次同步时，自动创建带 **高可读性时间戳** 的专属目录（如 `uid_2023-10-27_14-30`）。
@@ -104,36 +101,29 @@
 
 > 注：如果维护不及时，可以提出 issue 或者 pr 申请更改对应卡池信息文件。
 
-### 方式一：日志扫描 (Online Mode)  已失效
-
-1. 启动《明日方舟：终末地》PC 客户端。
-2. 打开游戏内的【寻访】界面，并点击一次【历史记录】。
-   *   *注：如果您同时游玩官服和B服，请分别登录并打开一次历史记录。*
-3. 打开本工具，点击 **[ ONLINE INITIALIZE ]**。
-4. **服务器选择**:
-   - 如果工具检测到单个账号，将自动同步。
-   - 如果工具检测到**双端数据**，界面将弹出选择框，点击对应的服务器即可开始同步。
-
-### 方式二：Web Token 同步 (推荐 / 支持多号)
+### 方式一：Web Token 同步 (推荐 / 支持多号)
 
 1. 打开本工具，点击 **[ WEB TOKEN SYNC ]**。
 2. 您有两种选择：
    - **推荐**: 点击 **[ CONNECT (OFFICIAL) ]**，在弹出的官方窗口中登录，软件将自动捕获凭证。
-   - **手动**: 点击下方输入框，粘贴您手动获取的 Token，然后点击 **[ CONNECT (LOCAL) ]**。
+   - **手动**: 点击下方输入框，粘贴您手动获取的 Token，然后点击 **[ CONNECT ]**。
 3. 如果该账号下有多个角色（如官服/B服），界面会提示您选择目标角色。
-### 方式三：查看本地历史 (Local Mode)
+
+### 方式二：查看本地历史 (Local Mode)
+
 1. 直接打开本工具。
 2. 点击 **[ LOCAL INITIALIZE ]**。
 3. 如果本地同时存有双服存档，工具会提示您选择要加载的服务器档案。
 
-### 方式四：导入临时 Json 文件
+### 方式三：导入临时 Json 文件
 
 1. 直接打开本工具。
-2. 点击 **[ IMPORT TEMP JSON ]**。
+2. 点击 **[ IMPORT JSON ]**。
 3. 选择需要导入的 Json 文件。
 
 ### **导出寻访报表 (Export Data)**
-1. 在成功加载任意服务器的数据后（ONLINE、LOCAL 或 TEMP 模式均可）。
+
+1. 在成功加载任意服务器的数据后（TOKEN、LOCAL 或 TEMP 模式均可）。
 2. 点击顶部导航栏的 **`[ EXPORT_DATA ]`** 按钮。
 3. 在系统弹窗中选择保存路径和格式（`.xlsx` 或 `.csv`），工具将根据当前数据源自动命名文件。
 

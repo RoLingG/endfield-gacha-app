@@ -7,6 +7,7 @@ import {
   setCachedHgToken, setCurrentUid, setCurrentServerType, setGlobalCharData, setGlobalWeaponData,
   setCurrentType, setLastDataType, setCurrentPool, setCurrentAllPoolsData, setIsAllPoolsMode, setIsFetching,
   getIsFetching, getCurrentServerType, getCurrentUid, getCurrentType, getTempExportData, getGlobalLang,
+  setTempExportData,
 } from './state.js';
 
 import { APP_ELEMENT_IDS, SNACKBAR_AUTO_CLOSE } from './constants.js';
@@ -228,6 +229,7 @@ window.resetToAnalyze = function () {
   setCurrentServerType("");
   setGlobalCharData(null);
   setGlobalWeaponData(null);
+  setTempExportData(null);
   setCurrentType('char');
   setLastDataType('char');
   setCurrentPool(null);
@@ -345,6 +347,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     // 输入框内不触发快捷键
     const tag = e.target.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+    // Ctrl+R 整页刷新（与 SYSTEM_RELOAD 一致，极端场景兜底）
+    if (e.ctrlKey && e.key === 'r') {
+      e.preventDefault();
+      handleReload();
+      return;
+    }
 
     // 以下快捷键仅在 APP 加载后生效
     const appLoaded = document.getElementById('dashboardPanel')?.style.display !== 'none'
