@@ -1,12 +1,6 @@
-<div align="center">
-
-<img src="https://rolingg.top/images/EndField/appicon.png" alt="EndField Gacha" width="120" />
-
 # Endfield Gacha App // 终末地寻访记录终端
 
-[![Go Version](https://img.shields.io/badge/Go-%3E%3D1.24-00ADD8.svg)](https://go.dev) ![Wails](https://img.shields.io/badge/Wails-2.0+-C70039.svg) [![Frontend](https://img.shields.io/badge/Frontend-JavaScript-F7DF1E.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript) [![Node](https://img.shields.io/badge/Node-%3E%3D24-green.svg)](LICENSE) [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) ![Release](https://img.shields.io/github/v/release/RoLingG/EndField_Gacha_App?style=flat&color=orange) ![Last Commit](https://img.shields.io/github/last-commit/RoLingG/EndField_Gacha_App?style=flat&color=purple)
-
-</div>
+[![Go Version](https://img.shields.io/badge/Go-%3E%3D1.24-00ADD8.svg)](https://go.dev) ![Wails](https://img.shields.io/badge/Wails-2.0+-C70039.svg) [![Frontend](https://img.shields.io/badge/Frontend-JavaScript-F7DF1E.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript) [![Node](https://img.shields.io/badge/Node-%3E%3D24-green.svg)](LICENSE) [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) ![Release](https://img.shields.io/github/v/release/RoLingG/endfield-gacha-app?style=flat&color=orange) ![Last Commit](https://img.shields.io/github/last-commit/RoLingG/endfield-gacha-app?style=flat&color=purple)
 
 一个极简、安全且具有沉浸式**终末地 (Endfield) 工业风格**的官服/B服抽卡记录分析工具。
 基于 Wails 构建，无需上传数据，完全本地处理数据，提供良好的数据可视化体验。
@@ -33,7 +27,7 @@
 ### 📊 核心数据分析 (Core Analytics)
 
 - **多模式启动**:
-  - **[ MODE A ] Web Token 同步**: 
+  - **[ MODE A ] Web Token 同步**:
     - **支持内置登录窗口**: 直接在软件内唤起官方登录页，安全快捷获取 Token。
     - **支持手动短 Token**: 兼容从浏览器开发者工具手动获取的 Token。
     - *注意：**[ MODE A ]** 支持通过 UID 区分同设备内的多个账号。*
@@ -45,6 +39,10 @@
   - 详细的历史记录列表与分页查询、排序筛选。
   - 支持终末地特殊的保底机制（80抽保底 / 120、240 井）进度追踪，自动计算是否触发垫刀逻辑。
 
+> [!NOTE]
+>
+> ⚠️ 原先通过解析 **HGWebview.log** 获取 Token 的在线同步方式，因官方调整日志显示规范已永久移除，请使用上述 **[ MODE A ]** 方式。
+
 ### 📈 统计分析 (Statistics)
 
 - **多维度统计**: 抽数分布、月度趋势、累计出货曲线、池子剖面、稀有度成分五张图表，角色池与武器池分别统计。
@@ -52,16 +50,12 @@
 - **UP 命中记录表**: 汇总各 UP 池的抽数 / 6★ / 出货率 / 均水位 / 歪率 / 最深记录，支持表头排序与极值着色。
 - **口径透明**: 所有统计均排除免费抽与不参与继承的池（基础寻访 / 启程寻访），图表附规则说明。
 
-> [!NOTE]
->
-> ⚠️ 原先通过解析 **HGWebview.log** 获取 Token 的在线同步方式，因官方调整日志显示规范已永久移除，请使用上述 **[ MODE A ]** 方式。
-
 ### 💾 本地化与隐私 (Local & Privacy)
 
 - **数据落盘**: 所有抽卡记录自动保存为本地 JSON 文件，不经过任何第三方服务器。
 - **原子备份**: 数据会先写入临时文件，意外出错能够保留 `.bak` 备份文件，随时回退到旧版有效记录。
 - **一键管理**: 内置 **[ DATA_FOLDER ]** 指令，快速打开数据存储目录进行备份或管理。
-- **智能归档**: 
+- **智能归档**:
   - 自动识别并复用已存在的 UID 目录，避免数据碎片化。
   - 新账号首次同步时，自动创建带 **高可读性时间戳** 的专属目录（如 `uid_2023-10-27_14-30`）。
 
@@ -69,7 +63,7 @@
 
 - **多格式支持**: 支持导出 `.xlsx`（Excel）和 `.csv`（CSV）两种格式，保存时自由选择。
 - **UID 专属报表**: 导出文件名自动包含 UID（如 `endfield_data_011xxx408_official.xlsx`）。
-- **多表分页**: Excel 格式自动将”角色寻访”与”武器寻访”拆分为独立工作表；CSV 格式采用分层 block 结构，方便整理与存档。
+- **多表分页**: Excel 格式自动将“角色寻访”与“武器寻访”拆分为独立工作表；CSV 格式采用分层 block 结构，方便整理与存档。
 
 ### 🖥️ 桌面集成 (Desktop Integration)
 
@@ -146,7 +140,7 @@
 
 ```
 userdata/
-├── uid_timeStamp/                      		  // [精准模式] 特定UID存档
+├── uid_timeStamp/                    // [精准模式] 特定UID存档
 │   ├── official_char_history.json    // 角色池记录
 │   └── official_weapon_history.json  // 武器池记录
 │   or
@@ -169,10 +163,10 @@ userdata/
 go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
 # 克隆项目
-git clone https://github.com/RoLingG/EndField_Gacha_App.git
+git clone https://github.com/RoLingG/endfield-gacha-app.git
 
 # 进入目录
-cd Endfield_Gacha_App
+cd endfield-gacha-app
 
 # 启动开发模式
 wails dev
