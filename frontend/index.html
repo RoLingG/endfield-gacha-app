@@ -8,7 +8,6 @@
     <link rel="preload" href="https://unpkg.com/mdui@2/mdui.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://unpkg.com/mdui@2/mdui.css"></noscript>
     <script defer src="https://unpkg.com/mdui@2/mdui.global.js" onerror="console.warn('MDUI 加载失败，部分功能可能受影响')"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/chart.js" onerror="console.warn('Chart.js 加载失败，图表功能不可用')"></script>
 </head>
 <body class="theme-endfield">
 
@@ -109,7 +108,7 @@
         <div class="tech-stat-row">
             <span>MEM: <span class="ls-val-primary">ALLOCATING</span></span>
             <span>NET: <span class="ls-val-accent">CONNECTED</span></span>
-            <span>VER: <span class="ls-val-muted">1.6.8</span></span>
+            <span>VER: <span class="ls-val-muted">1.7.0</span></span>
         </div>
     </div>
 </div>
@@ -163,12 +162,71 @@
         <div class="stats-cards-row" id="statsCardsRow"></div>
         <div class="stats-charts">
             <div class="stats-chart-box" id="pityDistChartContainer">
-                <div class="stats-chart-title" data-i18n="stats.pityDistribution">[ PITY DISTRIBUTION / 抽数分布 ]</div>
+                <div class="stats-chart-title">
+                    <span data-i18n="stats.pityDistribution">[ PITY DISTRIBUTION / 抽数分布 ]</span>
+                    <span class="cc-info">
+                        <span class="cc-info-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="7.2" y="3.6" width="1.6" height="5.6" rx="0.8"/><circle cx="8" cy="11.8" r="1"/></svg></span>
+                        <div class="cc-info-pop">
+                            <div class="cc-info-pop__head" data-i18n="stats.pityDistInfoHead">SCOPE // 统计口径</div>
+                            <div class="cc-info-pop__row"><span data-i18n="stats.infoRuleFree">免费抽</span><b data-i18n="stats.infoRuleFreeVal">不计入</b></div>
+                            <div class="cc-info-pop__row"><span data-i18n="stats.infoRuleExcluded">基础/启程寻访</span><b data-i18n="stats.infoRuleExcludedVal">不计入</b></div>
+                            <div class="cc-info-pop__sep"></div>
+                            <div class="cc-info-pop__desc" data-i18n="stats.pityDistInfoDesc"></div>
+                        </div>
+                    </span>
+                </div>
                 <div class="stats-chart-body" id="pityDistChartBody"></div>
             </div>
             <div class="stats-chart-box" id="monthlyChartContainer" style="display:none;">
-                <div class="stats-chart-title" data-i18n="stats.monthlyTrend">[ MONTHLY TREND / 月度趋势 ]</div>
+                <div class="stats-chart-title">
+                    <span data-i18n="stats.monthlyTrend">[ MONTHLY TREND / 月度趋势 ]</span>
+                    <span class="cc-info">
+                        <span class="cc-info-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="7.2" y="3.6" width="1.6" height="5.6" rx="0.8"/><circle cx="8" cy="11.8" r="1"/></svg></span>
+                        <div class="cc-info-pop">
+                            <div class="cc-info-pop__head" data-i18n="stats.monthlyInfoHead">SCOPE // 统计口径</div>
+                            <div class="cc-info-pop__row"><span data-i18n="stats.infoRuleFree">免费抽</span><b data-i18n="stats.infoRuleFreeVal">不计入</b></div>
+                            <div class="cc-info-pop__row"><span data-i18n="stats.infoRuleExcluded">基础/启程寻访</span><b data-i18n="stats.infoRuleExcludedVal">不计入</b></div>
+                            <div class="cc-info-pop__sep"></div>
+                            <div class="cc-info-pop__desc" data-i18n="stats.monthlyInfoDesc"></div>
+                        </div>
+                    </span>
+                </div>
                 <div class="stats-chart-body" id="monthlyChartBody"></div>
+            </div>
+            <div class="stats-chart-box" id="cumulativeChartContainer" style="display:none;">
+                <div class="stats-chart-title" data-i18n="stats.cumulative">[ CUMULATIVE 6★ / 累计出货曲线 ]</div>
+                <div class="stats-chart-body" id="cumulativeChartBody">
+                    <div class="cc-info">
+                        <span class="cc-info-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="7.2" y="3.6" width="1.6" height="5.6" rx="0.8"/><circle cx="8" cy="11.8" r="1"/></svg></span>
+                        <div class="cc-info-pop">
+                            <div class="cc-info-pop__head" data-i18n="stats.cumulativeInfoHead">EXPECTED CURVE // 期望曲线算法</div>
+                            <div class="cc-info-pop__row"><span data-i18n="stats.cumulativeRuleBase">基础概率</span><b>0.8%</b></div>
+                            <div class="cc-info-pop__row"><span data-i18n="stats.cumulativeRuleSoft">软保底</span><b>65 抽起 +5%/抽</b></div>
+                            <div class="cc-info-pop__row"><span data-i18n="stats.cumulativeRuleHard">硬保底</span><b>80 抽必出</b></div>
+                            <div class="cc-info-pop__sep"></div>
+                            <div class="cc-info-pop__desc" data-i18n-html="stats.cumulativeFormula">
+                                期望曲线按上式<b>逐抽累加</b>：每抽的出货概率随水位递增，<br>
+                                累加得到累计期望 6★ 数。<br>
+                                因软保底与硬保底，曲线在 65-80 区间会明显上弯。<br>
+                                实际曲线在期望之上 = 偏欧，之下 = 偏非。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="stats-charts">
+            <div class="stats-chart-box" id="upRecordContainer" style="display:none;">
+                <div class="stats-chart-title" data-i18n="stats.upBattle">[ UP HIT RECORDS / UP命中记录 ]</div>
+                <div class="stats-chart-body" id="upRecordBody"></div>
+            </div>
+            <div class="stats-chart-box" id="poolProfileContainer" style="display:none;">
+                <div class="stats-chart-title" data-i18n="stats.poolProfile">[ POOL PROFILE / 池子剖面 ]</div>
+                <div class="stats-chart-body" id="poolProfileBody"></div>
+            </div>
+            <div class="stats-chart-box" id="rarityStackContainer" style="display:none;">
+                <div class="stats-chart-title" data-i18n="stats.rarityStack">[ RARITY STACK / 稀有度成分 ]</div>
+                <div class="stats-chart-body" id="rarityStackBody"></div>
             </div>
         </div>
     </div>
@@ -242,6 +300,20 @@
     ::view-transition-new(root) {
         animation-duration: 0.35s;
         animation-timing-function: ease-in-out;
+    }
+
+    /* 基础重置与全局布局 */
+    body {
+        font-family: 'Consolas', 'Monaco', sans-serif;
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        background-color: var(--ef-black);
+        color: var(--ef-white);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        user-select: none;
     }
 
     mdui-dialog {
@@ -446,7 +518,7 @@
         animation: glowCycle 3s ease-in-out infinite;
     }
 
-    /* 6★ chip 状态色：UP / 新 / 普通 */
+    /* 6★ chip 状态色 */
     .rare-chip {
         display: inline-block;
         margin: 4px;
@@ -491,18 +563,62 @@
         --chip-bg: #66666619;
     }
 
-    /* 基础重置与全局布局 */
-    body {
-        font-family: 'Consolas', 'Monaco', sans-serif;
+    /* 6★ chip 详情 popover */
+    .rare-chip-wrap {
+        position: relative;
+        display: inline-flex;
+        margin: 4px;
+    }
+    .rare-chip-wrap .rare-chip {
         margin: 0;
-        padding: 0;
-        height: 100vh;
-        background-color: var(--ef-black);
-        color: var(--ef-white);
-        display: flex;
+    }
+    .rare-chip-pop {
+        position: absolute;
+        bottom: calc(100% + 5px);
+        left: 50%;
+        transform: translateX(-50%);
+        display: none;
         flex-direction: column;
-        overflow: hidden;
-        user-select: none;
+        width: max-content;
+        max-width: 240px;
+        padding: 7px 10px;
+        background: #0d0d0d;
+        border: 1px solid var(--ef-yellow);
+        border-radius: 4px;
+        z-index: 50;
+    }
+    .rare-chip-wrap:hover .rare-chip-pop {
+        display: flex;
+    }
+    .rare-chip-pop__head {
+        font-family: 'Consolas', monospace;
+        font-size: 10px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        color: var(--ef-yellow);
+        margin-bottom: 3px;
+    }
+    .rare-chip-pop__name {
+        font-family: 'Consolas', monospace;
+        font-size: 12px;
+        font-weight: bold;
+        color: #ffffff;
+        margin-bottom: 5px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid #333;
+    }
+    .rare-chip-pop__row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        font-family: 'Consolas', monospace;
+        font-size: 10px;
+        color: #888888;
+        line-height: 1.7;
+    }
+    .rare-chip-pop__row b {
+        font-weight: bold;
+        color: #dddddd;
     }
 
     .main-content-wrapper {
@@ -1400,7 +1516,6 @@
         border: 1px solid var(--ef-grey);
         padding: 15px 20px;
         position: relative;
-        overflow: hidden;
         height: 80px;
         display: flex;
         flex-direction: column;
@@ -1455,15 +1570,22 @@
         display: flex;
         flex-direction: column;
         gap: 20px;
+        margin-bottom: 20px;
     }
 
     .stats-chart-box {
         background: rgba(255, 255, 255, 0.03);
         border: 1px solid var(--ef-grey);
         display: flex;
-        flex-direction: column;
         min-height: 300px;
+        flex-direction: column;
         animation: statsChartFadeIn 0.4s ease-out;
+    }
+
+    /* 池子剖面 / 稀有度成分 */
+    #poolProfileContainer,
+    #rarityStackContainer {
+        min-height: 0;
     }
 
     @keyframes statsChartFadeIn {
@@ -1478,12 +1600,27 @@
     }
 
     .stats-chart-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
         font-size: 12px;
         color: var(--ef-yellow);
         font-weight: bold;
         letter-spacing: 2px;
         padding: 12px 16px;
         border-bottom: 1px solid var(--ef-grey);
+    }
+    .stats-chart-title .cc-info {
+        position: relative;
+        right: auto;
+        bottom: auto;
+        z-index: 10;
+    }
+    .stats-chart-title .cc-info-pop {
+        top: 22px;
+        bottom: auto;
+        right: auto;
+        left: 0;
     }
 
     .stats-chart-body {
@@ -1493,6 +1630,297 @@
         align-items: center;
         justify-content: center;
         position: relative;
+        box-sizing: border-box;
+    }
+
+    /* 可视化增强区域 */
+    .stats-chart-empty {
+        color: #666;
+        font-weight: bold;
+        text-align: center;
+        padding: 40px 20px;
+        width: 100%;
+    }
+
+    /* ---- 累计出货曲线 ---- */
+    #cumulativeChartBody {
+        align-items: stretch;
+        justify-content: flex-start;
+    }
+    #cumulativeChartBody canvas {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    .cc-info {
+        position: absolute;
+        right: 14px;
+        bottom: 10px;
+        width: 16px;
+        height: 16px;
+        line-height: 0;
+    }
+    .stats-card .cc-info {
+        top: 12px;
+        bottom: auto;
+        z-index: 20;
+    }
+    .stats-card .cc-info-pop {
+        top: 22px;
+        bottom: auto;
+    }
+    .cc-info-icon {
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        border: 1px solid #666;
+        border-radius: 50%;
+        color: #888;
+        cursor: help;
+        transition: all .2s;
+        user-select: none;
+    }
+    .cc-info-icon svg {
+        display: block;
+        width: 16px;
+        height: 16px;
+        fill: currentColor;
+    }
+    .cc-info:hover .cc-info-icon {
+        border-color: var(--ef-yellow);
+        color: var(--ef-yellow);
+        box-shadow: 0 0 6px rgba(255, 250, 0, .3);
+    }
+    .cc-info-pop {
+        position: absolute;
+        bottom: calc(100% + 10px);
+        right: 0;
+        display: none;
+        flex-direction: column;
+        width: max-content;
+        max-width: 300px;
+        padding: 10px 12px;
+        background: #0d0d0d;
+        border: 1px solid var(--ef-yellow);
+        border-radius: 4px;
+        z-index: 1;
+        font-weight: normal;
+        letter-spacing: normal;
+    }
+    .cc-info:hover .cc-info-pop { display: flex; }
+    .cc-info-pop__head {
+        font-family: 'Consolas', monospace;
+        font-size: 10px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        color: var(--ef-yellow);
+        margin-bottom: 8px;
+    }
+    .cc-info-pop__row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        font-family: 'Consolas', monospace;
+        font-size: 10px;
+        color: #888;
+        line-height: 1.9;
+    }
+    .cc-info-pop__row b {
+        font-weight: bold;
+        color: #ddd;
+    }
+    .cc-info-pop__sep {
+        height: 1px;
+        background: #333;
+        margin: 7px 0;
+    }
+    .cc-info-pop__desc {
+        font-family: 'Consolas', monospace;
+        font-size: 10px;
+        color: #888;
+        line-height: 1.8;
+    }
+    .cc-info-pop__desc b { color: #ddd; }
+
+    /* ---- UP 命中记录表 ---- */
+    .up-record-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: 'Consolas', monospace;
+        font-size: 11px;
+        table-layout: fixed;
+    }
+    .up-record-table th {
+        font-weight: bold;
+        color: var(--ef-yellow);
+        padding: 7px 10px;
+        border-bottom: 1px solid #555;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .up-record-table td {
+        color: #aaa;
+        padding: 7px 10px;
+        border-bottom: 1px solid #282828;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .up-record-table__sort { cursor: pointer; user-select: none; transition: color .15s; }
+    .up-record-table__sort:hover { color: #fff; text-shadow: 0 0 5px var(--ef-yellow); }
+    .up-record-table__sort.sorted { color: var(--ef-yellow); }
+    .up-record-table__name { color: #eee; font-weight: bold; }
+    .up-record-table__pools { color: #777; font-size: 10px; }
+    .up-record-table__rate-best { color: #7dd87d; font-weight: bold; }
+    .up-record-table__rate-worst { color: #ff6b6b; font-weight: bold; }
+    .up-record-table__deepest-max { color: #ff5722; font-weight: bold; }
+
+    /* ---- 卡池剖面图 ---- */
+    #poolProfileBody {
+        display: block;
+        width: 100%;
+    }
+    .pool-slice .ps-name { color: var(--ef-yellow); }
+    .ps-head {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        margin-bottom: 10px;
+        gap: 10px;
+    }
+    .ps-name { color: #ccc; white-space: nowrap; }
+    .ps-meta { color: #666; text-align: right; }
+
+    .ps-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        max-height: 380px;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+    .ps-row {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 12px;
+    }
+    .ps-idx {
+        flex: 0 0 auto;
+        width: 30px;
+        color: #555;
+        font-size: 11px;
+        text-align: right;
+    }
+    .ps-track {
+        flex: 1 1 auto;
+        position: relative;
+        height: 20px;
+        background: rgba(255, 255, 255, .02);
+        border-radius: 2px;
+    }
+    .ps-fill-bar {
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        border-radius: 2px;
+        background: linear-gradient(90deg, rgba(76, 175, 80, .25), rgba(76, 175, 80, .55));
+    }
+    .ps-fill-bar.up {
+        background: linear-gradient(90deg, rgba(244, 67, 54, .35), rgba(244, 67, 54, .75));
+    }
+    .ps-fill-bar.current {
+        background: repeating-linear-gradient(45deg, #2a2a2a 0 5px, #242424 5px 10px);
+        border: 1px dashed #444;
+    }
+    .ps-item {
+        flex: 0 0 auto;
+        width: 100px;
+        color: #ccc;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .ps-item.up { color: #ff8a80; font-weight: bold; }
+    .ps-item.current { color: #555; font-style: italic; }
+    .ps-badge {
+        display: inline-block;
+        font-size: 9px;
+        padding: 1px 4px;
+        border-radius: 2px;
+        margin-left: 4px;
+        vertical-align: 1px;
+    }
+    .ps-badge--up { color: #ffd7c9; background: rgba(255, 87, 34, .3); }
+    .ps-badge--new { color: #ffe0a8; background: rgba(232, 160, 53, .25); }
+    .ps-count {
+        flex: 0 0 auto;
+        width: 46px;
+        text-align: right;
+        color: #777;
+        font-size: 11px;
+    }
+    .ps-count.hi { color: var(--ef-chip-border); }
+    .ps-count.dim { color: #444; }
+    .ps-sum {
+        display: flex;
+        align-items: baseline;
+        gap: 18px;
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid #2a2a2a;
+        font-size: 11px;
+        color: #666;
+    }
+    .ps-sum b { color: #aaa; }
+
+    /* ---- 稀有度成分堆叠 ---- */
+    #rarityStackBody {
+        display: block;
+        width: 100%;
+    }
+    .spp-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        font-size: 10px;
+    }
+    .spp-name {
+        flex: 0 0 auto;
+        max-width: 140px;
+        color: #ccc;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .spp-bar {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        height: 18px;
+        overflow: hidden;
+        border: 1px solid #333;
+        border-radius: 3px;
+    }
+    .spp-seg {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+    .spp-6 { background: #a1341c; color: #ffdccf; }
+    .spp-5 { background: #8a6d1a; color: #ffeec2; }
+    .spp-4 { background: #4f3a6e; color: #e5d8fa; }
+    .spp-total {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        text-align: right;
+        color: #777;
     }
 
     /* 历史记录表格 */
@@ -2191,4 +2619,70 @@
     .theme-day .pool-menu::-webkit-scrollbar-thumb:hover {
         background: #d9b500;
     }
+
+    .theme-day .rare-chip-pop {
+        background: #fdfdfa;
+        border-color: var(--ef-yellow);
+    }
+
+    .theme-day .rare-chip-pop__head {
+        color: var(--ef-yellow);
+    }
+
+    .theme-day .rare-chip-pop__name {
+        color: #1f1f1f;
+        border-bottom-color: #e2e2da;
+    }
+
+    .theme-day .rare-chip-pop__row b {
+        color: #333;
+    }
+
+    .theme-day .stats-chart-empty {
+        color: #666;
+    }
+
+    /* ---- day 主题，统计附加图 ---- */
+    .theme-day .up-record-table th { border-bottom-color: #cfcfc7; }
+    .theme-day .up-record-table td { color: #555; border-bottom-color: #e2e2da; }
+    .theme-day .up-record-table__name { color: #1f1f1f; }
+    .theme-day .up-record-table__pools { color: #999; }
+    .theme-day .up-record-table__rate-best { color: #1f7a1f; }
+    .theme-day .up-record-table__rate-worst { color: #c0392b; }
+    .theme-day .up-record-table__sort:hover { color: #1f1f1f; text-shadow: none; }
+    .theme-day .cc-info-icon { border-color: #bdbdb0; color: #888; }
+    .theme-day .cc-info-pop { background: #fdfdfa; border-color: var(--ef-yellow); }
+    .theme-day .cc-info-pop__row b { color: #333; }
+    .theme-day .cc-info-pop__desc { color: #666; }
+    .theme-day .cc-info-pop__desc b { color: #1f1f1f; }
+    .theme-day .cc-info-pop__sep { background: #e2e2da; }
+    .theme-day .ps-name { color: #555; }
+    .theme-day .ps-meta { color: #888; }
+    .theme-day .ps-idx { color: #999; }
+    .theme-day .ps-track { background: rgba(0, 0, 0, .03); }
+    .theme-day .ps-fill-bar {
+        background: linear-gradient(90deg, rgba(76, 175, 80, .45), rgba(76, 175, 80, .8));
+    }
+    .theme-day .ps-fill-bar.up {
+        background: linear-gradient(90deg, rgba(244, 67, 54, .5), rgba(244, 67, 54, .85));
+    }
+    .theme-day .ps-fill-bar.current {
+        background: repeating-linear-gradient(45deg, #e9e8e0 0 5px, #e2e2da 5px 10px);
+        border-color: #cfcfc7;
+    }
+    .theme-day .ps-item { color: #333; }
+    .theme-day .ps-item.up { color: #d32f2f; }
+    .theme-day .ps-item.current { color: #999; }
+    .theme-day .ps-count { color: #888; }
+    .theme-day .ps-count.dim { color: #bbb; }
+    .theme-day .ps-sum { border-top-color: #e2e2da; color: #888; }
+    .theme-day .ps-sum b { color: #333; }
+    .theme-day .ps-badge--up { color: #fff; background: #b8441f; }
+    .theme-day .ps-badge--new { color: #fff; background: #9c6414; }
+    .theme-day .spp-name { color: #555; }
+    .theme-day .spp-total { color: #888; }
+    .theme-day .spp-bar { border-color: #cfcfc7; }
+    .theme-day .spp-6 { background: #f0654a; color: #4a0f04; }
+    .theme-day .spp-5 { background: #e8b93c; color: #4a3400; }
+    .theme-day .spp-4 { background: #a97fd6; color: #2a0f4a; }
 </style>

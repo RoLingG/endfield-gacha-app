@@ -1,4 +1,4 @@
-import { calculatePoolStats, calculateSparkInfo, calculatePityBoost, calculatePerPoolPity } from '../data.js';
+import { calculatePoolStats, calculateSparkInfo, calculatePityBoost, calculatePerPoolPity, calculateOffRate } from '../data.js';
 import { getCurrentType, getLastDataType, getGlobalPoolConfig, getGlobalCharPoolOrder, getGlobalWeaponPoolOrder } from '../state.js';
 import { updateCurrencyDisplay } from '../utils.js';
 import { t } from '../i18n.js';
@@ -87,13 +87,14 @@ export function createSummaryStrip(dataMap, poolName) {
 export function createAllPoolsSummaryStrip(items) {
   if (!items || !Array.isArray(items) || items.length === 0) items = [];
   const { total, notFreeTotal, sixStarCount, fiveStarCount, fourStarCount, rate } = calculatePoolStats(items);
+  const { upCount, offCount, offRate } = calculateOffRate(items, getGlobalPoolConfig() || {});
   const typeLabel = (getLastDataType() === 'char') ? t('summary.characters') : t('summary.weapons');
 
   document.getElementById('summaryStrip').innerHTML = `
     <div class="info-card">
       <div class="info-label">${t('summary.totalDraws')}</div>
       <div class="info-value">${total}</div>
-      <div class="info-sub">${t('summary.allPoolsCombined')}</div>
+      <div class="info-sub">${t('summary.allPoolsCareer')}</div>
     </div>
 
     <div class="info-card">
@@ -103,9 +104,9 @@ export function createAllPoolsSummaryStrip(items) {
     </div>
 
     <div class="info-card">
-      <div class="info-label">${t('summary.ratio')}</div>
-      <div class="info-value">${rate}%</div>
-      <div class="info-sub">${sixStarCount} ${typeLabel}</div>
+      <div class="info-label">${t('summary.offRate')}</div>
+      <div class="info-value">${offRate}%</div>
+      <div class="info-sub">${t('summary.offRateSub', { up: upCount, off: offCount })}</div>
     </div>
   `;
   updateCurrencyDisplay(notFreeTotal, getLastDataType(), { six: sixStarCount, five: fiveStarCount, four: fourStarCount });

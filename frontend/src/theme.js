@@ -4,6 +4,7 @@ import {
   getLastDataType, getGlobalCharData, getGlobalWeaponData,
 } from './state.js';
 import { t } from './i18n.js';
+import Chart from 'chart.js/auto';
 
 // 通过回调注入图表更新函数，避免与 render/chart.js 循环依赖
 let chartUpdater = null;

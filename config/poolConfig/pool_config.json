@@ -71,6 +71,15 @@
       "lastUpdate": "2026-04-29 23:00:14"
     },
     {
+      "poolId": "joint_1_2_2",
+      "poolName": "辉光庆典",
+      "poolType": "joint",
+      "up6Name": "",
+      "up6CharId": "",
+      "gachaType": "char",
+      "lastUpdate": "2026-05-14 23:00:14"
+    },
+    {
       "poolId": "special_1_3_1",
       "poolName": "拳出无悔",
       "poolType": "special",

@@ -5,7 +5,7 @@ import {
 
 import {
   setCachedHgToken, setCurrentUid, setCurrentServerType, setGlobalCharData, setGlobalWeaponData,
-  setCurrentType, setLastDataType, setCurrentPool, setCurrentAllPoolsData, setIsAllPoolsMode, setIsFetching,
+  setCurrentType, setLastDataType, resetCurrentPool, setCurrentAllPoolsData, setIsAllPoolsMode, setIsFetching,
   getIsFetching, getCurrentServerType, getCurrentUid, getCurrentType, getTempExportData, getGlobalLang,
   setTempExportData,
 } from './state.js';
@@ -55,13 +55,6 @@ async function handleReload() {
     dialog.open = false;
     dialog.remove();
   });
-  if (window.Chart && window.Chart.instances) {
-    Object.values(window.Chart.instances).forEach(chart => {
-      if (chart && chart.destroy) {
-        chart.destroy();
-      }
-    });
-  }
   setIsFetching(false)
   await ReloadFrontend();
 }
@@ -232,7 +225,7 @@ window.resetToAnalyze = function () {
   setTempExportData(null);
   setCurrentType('char');
   setLastDataType('char');
-  setCurrentPool(null);
+  resetCurrentPool();
   setCurrentAllPoolsData(null);
   setIsAllPoolsMode(false);
   resetFilters();

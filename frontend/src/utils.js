@@ -45,24 +45,36 @@ export function resetButton(btn, text) {
 }
 
 export function setPoolSelectorVisibility(el, visible) {
+  // 切换方向前摘掉上一轮的收尾监听，避免它在新动画中途触发
+  if (el._poolSelEnd) {
+    el.removeEventListener("transitionend", el._poolSelEnd);
+    el._poolSelEnd = null;
+  }
+
   if (visible) {
     const h = el.scrollHeight;
     el.style.transition = "height .25s ease-out, opacity .20s ease-out, margin-bottom .25s ease-in";
     el.style.height = "0px";
     el.style.marginBottom = "20px"
-    requestAnimationFrame(() => {
+    el._poolSelRaf = requestAnimationFrame(() => {
+      el._poolSelRaf = null;
       el.style.height = h + "px";
       el.style.opacity = "1";
     });
-    // 针对 height 做对应的 transitionend 处理
-    el.addEventListener("transitionend", function handler(e) {
+    // 展开事件处理函数。收尾时校验方向，已被收起打断则跳过，避免覆盖收起结果
+    el._poolSelEnd = function handler(e) {
       if (e.propertyName !== "height") return;
+      if (el.dataset.poolSelState !== 'shown') return;
       el.style.height = "";
       el.style.overflow = "";
       el.style.transition = "";
       el.removeEventListener("transitionend", handler);
-    });
+      el._poolSelEnd = null;
+    };
+    el.dataset.poolSelState = 'shown';
+    el.addEventListener("transitionend", el._poolSelEnd);
   } else {
+    el.dataset.poolSelState = 'hidden';
     // 禁用 pool-menu 的 max-height transition，避免和 wrapper 的 collapse 冲突
     const menu = el.querySelector('.pool-menu');
     if (menu) {
@@ -70,11 +82,13 @@ export function setPoolSelectorVisibility(el, visible) {
       menu.classList.remove('show');
     }
     el.style.transition = "height .25s ease-in, opacity .20s ease-out, margin-bottom .25s ease-in";
-    el.style.height = el.scrollHeight + "px";
-    requestAnimationFrame(() => {
+    // 用 offsetHeight 作过渡初值：height 为空时 scrollHeight 不可靠
+    el.style.height = el.offsetHeight + "px";
+    el._poolSelRaf = requestAnimationFrame(() => {
+      el._poolSelRaf = null;
       el.style.height = "0px";
       el.style.opacity = "0";
-      el.style.marginBottom = "0"
+      el.style.marginBottom = "0";
     });
   }
 }

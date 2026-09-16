@@ -17,12 +17,14 @@ let globalCharData = null;
 let globalWeaponData = null;
 let currentType = 'char';
 let lastDataType = 'char';
-let currentPool = null;
+// 按数据类型分别记录选中池，使 char/weapon 间来回切换时各自保留用户的选择
+const currentPoolByType = { char: null, weapon: null };
 let currentAllPoolsData = null;
 let isAllPoolsMode = false;
 let gachaChartInstance = null;
 let pityDistChartInstance = null;
 let monthlyTrendChartInstance = null;
+let cumulativeChartInstance = null;
 
 // 全局语言
 let globalLang = "zh";
@@ -73,8 +75,11 @@ export function setCurrentType(v) { currentType = v; }
 export function getLastDataType() { return lastDataType; }
 export function setLastDataType(v) { lastDataType = v; }
 
-export function getCurrentPool() { return currentPool; }
-export function setCurrentPool(v) { currentPool = v; }
+// 选中池按数据类型隔离：不传 type 时取当前生效类型（lastDataType）
+export function getCurrentPool(type = lastDataType) { return currentPoolByType[type] ?? null; }
+export function setCurrentPool(v, type = lastDataType) { currentPoolByType[type] = v; }
+// 清空全部类型的选中池
+export function resetCurrentPool() { currentPoolByType.char = null; currentPoolByType.weapon = null; }
 
 export function getCurrentAllPoolsData() { return currentAllPoolsData; }
 export function setCurrentAllPoolsData(v) { currentAllPoolsData = v; }
@@ -90,6 +95,9 @@ export function setPityDistChartInstance(v) { pityDistChartInstance = v; }
 
 export function getMonthlyTrendChartInstance() { return monthlyTrendChartInstance; }
 export function setMonthlyTrendChartInstance(v) { monthlyTrendChartInstance = v; }
+
+export function getCumulativeChartInstance() { return cumulativeChartInstance; }
+export function setCumulativeChartInstance(v) { cumulativeChartInstance = v; }
 
 export function getGlobalTheme() { return globalTheme; }
 export function setGlobalTheme(v) { globalTheme = v; }

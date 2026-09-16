@@ -1,6 +1,15 @@
+# 构建产物
 build/bin
-node_modules
 frontend/dist
-cmd/sync_poolConfig
-docs
 migrate.exe
+cmd/sync_poolConfig
+
+# 依赖与构建缓存
+node_modules
+frontend/package.json.md5
+
+# 编辑器
+.idea
+.claude
+
+docs

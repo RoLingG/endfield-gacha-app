@@ -137,6 +137,7 @@ func FetchCharDataAll(ctx context.Context, token, serverID, lang string, knownSe
 	session := &gachaSession{Token: token, ServerID: serverID, Lang: lang}
 	poolTypes := []string{
 		"E_CharacterGachaPoolType_Special",
+		"E_CharacterGachaPoolType_Joint",
 		"E_CharacterGachaPoolType_Standard",
 		"E_CharacterGachaPoolType_Beginner",
 	}
@@ -147,7 +148,7 @@ func FetchCharDataAll(ctx context.Context, token, serverID, lang string, knownSe
 	results := make(chan result, len(poolTypes))
 	for _, pt := range poolTypes {
 		go func(poolType string) {
-			data, err := fetchCharDataFromPool(ctx, session, poolType, knownSeqIDs) // 透传早停集合（3 个 goroutine 共享同一只读 map，并发读安全）
+			data, err := fetchCharDataFromPool(ctx, session, poolType, knownSeqIDs) // 透传早停集合（各 goroutine 共享同一只读 map，并发读安全）
 			select {
 			case results <- result{data: data, err: err}:
 			case <-ctx.Done():

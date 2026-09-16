@@ -26,6 +26,24 @@ function renderRareItemChip({ label, isUpItem, isNewItem, cornerBadge }) {
     `</span>`;
 }
 
+// 6★ 详情 popover（hover 显示，纯 CSS）
+function renderRareChipPop(item, isUpItem) {
+  const upText = isUpItem ? "YES" : "-";
+  const newText = item.isNew ? "YES" : "-";
+  const inheritedRow = item.inheritedPity
+    ? `<div class="rare-chip-pop__row"><span>INHERITED</span><b>+${item.inheritedPity}</b></div>`
+    : "";
+  return `<span class="rare-chip-pop">` +
+    `<span class="rare-chip-pop__head">// 6★ DETAIL</span>` +
+    `<span class="rare-chip-pop__name">${item.name}</span>` +
+    `<span class="rare-chip-pop__row"><span>POOL</span><b>${item.poolName || "-"}</b></span>` +
+    `<span class="rare-chip-pop__row"><span>PITY</span><b>${item.pityText}</b></span>` +
+    inheritedRow +
+    `<span class="rare-chip-pop__row"><span>UP</span><b>${upText}</b></span>` +
+    `<span class="rare-chip-pop__row"><span>NEW</span><b>${newText}</b></span>` +
+    `</span>`;
+}
+
 function renderRareRecordsCard(options) {
   const {
     sixStarDetails,
@@ -48,12 +66,13 @@ function renderRareRecordsCard(options) {
   const chipsHtml = sixStarDetails.map(item => {
     const upCharName = getUpCharName ? getUpCharName(item) : null;
     const isUpItem = upCharName && item.name === upCharName;
-    return renderRareItemChip({
+    const chip = renderRareItemChip({
       label: getChipLabel(item),
       isUpItem,
       isNewItem: item.isNew,
       cornerBadge: item.inheritedPity
     });
+    return `<span class="rare-chip-wrap">` + chip + renderRareChipPop(item, isUpItem) + `</span>`;
   }).join("");
 
   const emptyHtml = `<span style="color:${emptyColor}; font-style:italic; font-size:12px;">// NO SIGNAL DETECTED</span>`;
@@ -111,7 +130,7 @@ export function createAllPoolsRareRecordsCard(items) {
     countLabel: t('rare.total6Records'),
     countValue: sixStarDetails.length,
     labelText,
-    getChipLabel: (item) => `${item.name} - ${item.poolName} [${item.pityText}]`,
+    getChipLabel: (item) => `${item.name} [${item.pityText}]`,
     getUpCharName: (item) => {
       const config = getGlobalPoolConfig();
       return config && config[item.poolName] ? config[item.poolName] : null;

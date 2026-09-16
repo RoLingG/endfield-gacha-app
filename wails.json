@@ -2,6 +2,11 @@
   "$schema": "https://wails.io/schemas/config.v2.json",
   "name": "Endfield_Gacha_App",
   "outputfilename": "Endfield_Gacha",
+  "info": {
+    "productVersion": "1.7.0",
+    "productName": "Endfield Gacha",
+    "comments": "明日方舟终末地寻访记录"
+  },
   "frontend:install": "npm install",
   "frontend:build": "npm run build",
   "frontend:dev:watcher": "npm run dev",

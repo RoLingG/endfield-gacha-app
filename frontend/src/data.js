@@ -1,4 +1,4 @@
-import { SPARK_TIER1, SPARK_TIER2, PITY_BOOST_START, CHAR_BASE_RATE, CHAR_HARD_PITY, CHAR_PITY_MU, CHAR_PITY_SIGMA, WEAPON_PITY_MU, WEAPON_PITY_SIGMA, CHAR_UP_RATE, WEAPON_UP_RATE } from './constants.js';
+import { SPARK_TIER1, SPARK_TIER2, PITY_BOOST_START, CHAR_BASE_RATE, CHAR_HARD_PITY, CHAR_PITY_MU, CHAR_PITY_SIGMA, WEAPON_PITY_MU, WEAPON_PITY_SIGMA, WEAPON_BASE_RATE, WEAPON_PULLS_PER_CLAIM, WEAPON_CLAIM_HARD_PITY, CHAR_UP_RATE, WEAPON_UP_RATE } from './constants.js';
 import {getGlobalCharPoolOrder, getGlobalWeaponPoolOrder} from "./state";
 
 export const DEFAULT_EMPTY_POOL_STATS = {
@@ -76,7 +76,7 @@ export function calculateSixStarDetails(items, reverse = false, allItems) {
     const isExcluded = isPityExcluded(firstItem?.poolId);
 
     if (isExcluded) {
-      // 排除池：冻结 pityCounter，用独立 poolPity 计数
+      // 排除池，冻结 pityCounter，用独立 poolPity 计数
       const saved = pityCounter;
       let poolPity = 0;
       const details = [];
@@ -99,7 +99,7 @@ export function calculateSixStarDetails(items, reverse = false, allItems) {
       allDetails.push(...details);
       pityCounter = saved;
     } else {
-      // 非排除池：pityCounter 跨池累加，poolPity 当前池内计数
+      // 非排除池，pityCounter 跨池累加，poolPity 当前池内计数
       const details = [];
       const inheritedPity = pityCounter;
       let poolPity = 0;
@@ -168,7 +168,7 @@ export function calculateSparkInfo(reversed, targetUp) {
   return { sparkCount, targetLimit, rightCornerSub };
 }
 
-// 不参与跨池水位继承的特殊卡池（含武器池，武器池保底不继承）
+// 不参与跨池水位继承的特殊卡池（基础寻访、启程寻访与武器池，均无继承规则）
 const EXCLUDED_FROM_PITY = ['standard', 'beginner'];
 
 function isWeaponPool(poolId) {
@@ -177,6 +177,13 @@ function isWeaponPool(poolId) {
 
 function isPityExcluded(poolId) {
   return EXCLUDED_FROM_PITY.includes(poolId) || isWeaponPool(poolId);
+}
+
+// 不参与欧非统计的卡池。仅基础寻访与启程寻访，其保底水位不被继承链承认，
+// 且出货水位普遍极低，计入会拉低均值使评级偏欧；武器池有独立的期望基准，
+// 需正常统计，故不可复用 isPityExcluded
+function isStatsExcluded(poolId) {
+  return EXCLUDED_FROM_PITY.includes(poolId);
 }
 
 // 计算每个池子各自的水位（保底计数跨池继承，出 6★ 归零）
@@ -214,8 +221,11 @@ export function calculatePerPoolPity(dataMap, poolOrder) {
 }
 
 // 计算当前水位下一次单抽出 6★ 概率
+// 入参 currentPity = 已垫抽数，即「下一次抽」是第 currentPity+1 抽
+// 官方规则（docs/luck-eval.md §2.1）：第 1~65 抽 0.8%；第 66 抽起每抽 +5%；第 80 抽必出
+// 换算到 currentPity：水位 >=79 时下一次即第 80 抽，必出
 function calcSingleProb(currentPity) {
-  if (currentPity >= CHAR_HARD_PITY) {
+  if (currentPity >= CHAR_HARD_PITY - 1) {
     return 100
   }
   if (currentPity >= PITY_BOOST_START) {
@@ -290,7 +300,8 @@ export function mergeAllPoolsData(dataMap, type = 'char') {
   return merged;
 }
 
-// 平均出货抽数（排除免费抽，保底跨池继承，出 6★ 归零，基础寻访/启程寻访排除）
+// 平均出货抽数（排除免费抽与非继承池的出货，保底跨池继承，出 6★ 归零）
+// 口径需与欧非判定所用理论模型（μ=CHAR_PITY_MU，按特许寻访规则推导）一致
 export function calculateAvgPity(items) {
   if (!items || !Array.isArray(items) || items.length === 0) return DEFAULT_AVG_PITY;
 
@@ -316,9 +327,12 @@ export function calculateAvgPity(items) {
     }
     pity++;
     if (item.rarity === 6) {
-      pityList.push(pity);
+      // 标准/启程寻访的出货不参与平均
+      if (!isStatsExcluded(item.poolId)) {
+        pityList.push(pity);
+        sixCount++;
+      }
       pity = 0;
-      sixCount++;
     }
   }
   // 最后未出6★的抽数不计入平均（没有出货就不计入平均水位）
@@ -328,7 +342,7 @@ export function calculateAvgPity(items) {
   return { avgPity, sixStarCount: sixCount };
 }
 
-// 最长不出货记录（排除免费抽，保底跨池继承，基础寻访/启程寻访排除）
+// 最长不出货记录（排除免费抽与非继承池，保底跨池继承）
 export function calculateMaxDrought(items) {
   if (!items || !Array.isArray(items) || items.length === 0) return DEFAULT_MAX_DROUGHT;
 
@@ -340,17 +354,18 @@ export function calculateMaxDrought(items) {
   for (const item of sorted) {
     if (!isDraw(item)) continue; // 跳过寻访情报书等非抽卡条目
     if (item.isFree) continue;
+    const excluded = isPityExcluded(item.poolId);
     if (item.poolId !== lastPoolId) {
       const wasExcluded = isPityExcluded(lastPoolId);
-      const nowExcluded = isPityExcluded(item.poolId);
-      if (nowExcluded && !wasExcluded) {
+      if (excluded && !wasExcluded) {
         savedStreak = currentStreak;
         currentStreak = 0;
-      } else if (!nowExcluded && wasExcluded) {
+      } else if (!excluded && wasExcluded) {
         currentStreak = savedStreak;
       }
       lastPoolId = item.poolId;
     }
+    if (isStatsExcluded(item.poolId)) continue; // 标准/启程寻访不参与连续未出货统计
     if (item.rarity === 6) {
       if (currentStreak > maxDrought) maxDrought = currentStreak;
       currentStreak = 0;
@@ -361,7 +376,7 @@ export function calculateMaxDrought(items) {
   return { maxDrought, currentDrought: currentStreak };
 }
 
-// 按月统计抽数和出货数（排除免费抽）
+// 按月统计抽数和出货数（排除免费抽与非继承池，与其它统计口径一致）
 export function calculateMonthlyStats(items, poolConfig = {}) {
   if (!items || !Array.isArray(items) || items.length === 0) return DEFAULT_MONTHLY_STATS;
 
@@ -369,6 +384,7 @@ export function calculateMonthlyStats(items, poolConfig = {}) {
   for (const item of items) {
     if (!isDraw(item)) continue; // 跳过寻访情报书等非抽卡条目
     if (item.isFree) continue;
+    if (isStatsExcluded(item.poolId)) continue; // 标准/启程寻访不参与月度统计
     const date = new Date(Number(item.gachaTs));
     if (isNaN(date.getTime())) continue;
     const month = date.toISOString().slice(0, 7);
@@ -405,7 +421,7 @@ export function calculateMonthlyStats(items, poolConfig = {}) {
   return result;
 }
 
-// 6★ 之间的抽数间隔分布（排除免费抽，保底跨池继承，基础寻访/启程寻访排除）
+// 6★ 之间的抽数间隔分布（排除免费抽与非继承池的出货，保底跨池继承）
 export function calculatePityDistribution(items, poolConfig = {}) {
   if (!items || !Array.isArray(items) || items.length === 0) return DEFAULT_PITY_DISTRIBUTION
 
@@ -419,26 +435,29 @@ export function calculatePityDistribution(items, poolConfig = {}) {
   for (const item of sorted) {
     if (!isDraw(item)) continue; // 跳过寻访情报书等非抽卡条目
     if (item.isFree) continue;
+    const excluded = isPityExcluded(item.poolId);
     if (item.poolId !== lastPoolId) {
       const wasExcluded = isPityExcluded(lastPoolId);
-      const nowExcluded = isPityExcluded(item.poolId);
-      if (nowExcluded && !wasExcluded) {
+      if (excluded && !wasExcluded) {
         savedStreak = streak;
         streak = 0;
-      } else if (!nowExcluded && wasExcluded) {
+      } else if (!excluded && wasExcluded) {
         streak = savedStreak;
       }
       lastPoolId = item.poolId;
     }
     streak++;
     if (item.rarity === 6) {
-      const bucketIndex = Math.min(Math.floor((streak - 1) / 10), 7);
-      buckets[bucketIndex]++;
-      const upName = poolConfig[item.poolName];
-      if (upName && getItemName(item) === upName) {
-        upBuckets[bucketIndex]++;
-      } else {
-        offBuckets[bucketIndex]++;
+      // 标准/启程寻访的出货不进分桶
+      if (!isStatsExcluded(item.poolId)) {
+        const bucketIndex = Math.min(Math.floor((streak - 1) / 10), 7);
+        buckets[bucketIndex]++;
+        const upName = poolConfig[item.poolName];
+        if (upName && getItemName(item) === upName) {
+          upBuckets[bucketIndex]++;
+        } else {
+          offBuckets[bucketIndex]++;
+        }
       }
       streak = 0;
     }
@@ -474,6 +493,296 @@ export function calculateUpLevel(upCount, sixStarCount, isWeapon) {
   if (z > -0.5) return 'stats.luckNormal';
   if (z > -1.5) return 'stats.luckBelow';
   return 'stats.luckBad';
+}
+
+export const DEFAULT_OFF_RATE = { sixStarCount: 0, upCount: 0, offCount: 0, offRate: "0.0" };
+
+// 计算生涯总歪率（仅统计真实抽卡 6★，UP 判定复用 calculateUpCount 单一口径）
+export function calculateOffRate(items, poolConfig = {}) {
+  if (!items || !Array.isArray(items) || items.length === 0) return DEFAULT_OFF_RATE;
+
+  const drawItems = items.filter(isDraw);
+  const sixStarCount = drawItems.filter(i => i.rarity === 6).length;
+  const upCount = calculateUpCount(drawItems, poolConfig);
+  const offCount = sixStarCount - upCount;
+  const offRate = sixStarCount > 0
+    ? ((offCount / sixStarCount) * 100).toFixed(1)
+    : "0.0";
+  return { sixStarCount, upCount, offCount, offRate };
+}
+
+// 卡池剖面数据，每池的总抽数、出货周期列表与末尾未出货抽数
+// cycles：每次出货一个周期，含该次消耗水位 pity、名称、是否 UP / 新获得
+// tail：最后一次出货之后累计未出货的抽数（进行中，可能为 0）
+export function calculatePoolProfile(dataMap, poolOrder, poolConfig = {}) {
+  const profiles = [];
+  if (!dataMap || typeof dataMap !== 'object') return profiles;
+
+  const poolNames = [...poolOrder];
+  for (const poolName in dataMap) {
+    if (!poolNames.includes(poolName)) poolNames.push(poolName);
+  }
+
+  for (const poolName of poolNames) {
+    const items = dataMap[poolName];
+    if (!items || items.length === 0) continue;
+
+    const drawItems = items.filter(isDraw).filter(i => !i.isFree);
+    const total = drawItems.length;
+    if (total === 0) continue;
+
+    const sorted = drawItems.sort((a, b) => Number(a.gachaTs) - Number(b.gachaTs) || Number(a.seqId) - Number(b.seqId));
+    const upName = poolConfig[poolName];
+
+    let streak = 0;
+    let deepest = 0;
+    const cycles = [];
+    for (const item of sorted) {
+      streak++;
+      if (item.rarity === 6) {
+        cycles.push({
+          pity: streak,
+          name: getItemName(item),
+          isUp: !!(upName && getItemName(item) === upName),
+          isNew: !!item.isNew
+        });
+        if (streak > deepest) deepest = streak;
+        streak = 0;
+      }
+    }
+    profiles.push({
+      poolName,
+      total,
+      deepest,
+      cycles,
+      tail: streak
+    });
+  }
+  return profiles;
+}
+
+// 稀有度成分堆叠数据，每池 6★/5★/4★ 计数
+export function calculateRarityStack(dataMap, poolOrder) {
+  const stacks = [];
+  if (!dataMap || typeof dataMap !== 'object') return stacks;
+
+  const poolNames = [...poolOrder];
+  for (const poolName in dataMap) {
+    if (!poolNames.includes(poolName)) poolNames.push(poolName);
+  }
+
+  for (const poolName of poolNames) {
+    const items = dataMap[poolName];
+    if (!items || !Array.isArray(items) || items.length === 0) continue;
+    const stats = calculatePoolStats(items);
+    stacks.push({
+      poolName,
+      total: stats.total,
+      six: stats.sixStarCount,
+      five: stats.fiveStarCount,
+      four: stats.fourStarCount
+    });
+  }
+  return stacks;
+}
+
+// UP 抽卡命中数据，按 UP 目标聚合本类型全部 UP 池战绩（歪池计入所属 UP 行，无配置池不参与）
+// 每行含：抽数 / 6★ 数 / 出货率 / 均水位 / 歪率 / 最深水位
+export function calculateUpRecords(items, poolConfig = {}) {
+  if (!items || !Array.isArray(items) || items.length === 0) return DEFAULT_ARRAY;
+
+  const sorted = [...items]
+    .filter(item => isDraw(item) && !item.isFree)
+    .sort((a, b) => Number(a.gachaTs) - Number(b.gachaTs) || Number(a.seqId) - Number(b.seqId));
+
+  // 水位（跨池继承口径）
+  const recordMap = new Map();
+  // 出货前即建行，使抽数能从周期起点开始累计
+  const ensureRow = upName => {
+    if (!recordMap.has(upName)) {
+      recordMap.set(upName, {
+        upName, pools: new Set(), sixStarCount: 0, upCount: 0, offCount: 0,
+        deepest: 0, pulls: 0, pitySum: 0
+      });
+    }
+    return recordMap.get(upName);
+  };
+
+  let streak = 0;
+  let lastPoolId = '';
+  let savedStreak = 0;
+  let currentUp = null;
+
+  for (const item of sorted) {
+    if (item.poolId !== lastPoolId) {
+      const wasExcluded = isPityExcluded(lastPoolId);
+      const nowExcluded = isPityExcluded(item.poolId);
+      if (nowExcluded && !wasExcluded) {
+        savedStreak = streak;
+        streak = 0;
+      } else if (!nowExcluded && wasExcluded) {
+        streak = savedStreak;
+      }
+      lastPoolId = item.poolId;
+      currentUp = poolConfig[item.poolName] || null;
+      // 池名随抽数一并累计（不能等出货才记，否则未出 6★ 的池名会丢失）
+      if (currentUp) ensureRow(currentUp).pools.add(item.poolName);
+    }
+    streak++;
+    if (currentUp) ensureRow(currentUp).pulls++;
+
+    if (item.rarity === 6) {
+      const upName = poolConfig[item.poolName];
+      if (!upName) {
+        streak = 0;
+        continue; // 常驻池无 UP 配置，不参与战绩表
+      }
+      const rec = ensureRow(upName);
+      rec.sixStarCount++;
+      rec.pitySum += streak;
+      const isUp = getItemName(item) === upName;
+      if (isUp) rec.upCount++; else rec.offCount++;
+      if (streak > rec.deepest) rec.deepest = streak;
+      streak = 0;
+    }
+  }
+
+  return [...recordMap.values()].map(rec => ({
+    upName: rec.upName,
+    pools: rec.pools,
+    pulls: rec.pulls,
+    sixStarCount: rec.sixStarCount,
+    upCount: rec.upCount,
+    offCount: rec.offCount,
+    deepest: rec.deepest,
+    rate: rec.pulls > 0 ? +((rec.sixStarCount / rec.pulls) * 100).toFixed(2) : 0,
+    avgPity: rec.sixStarCount > 0 ? +(rec.pitySum / rec.sixStarCount).toFixed(1) : 0,
+    offRate: rec.sixStarCount > 0 ? +((rec.offCount / rec.sixStarCount) * 100).toFixed(0) : 0
+  }));
+}
+
+// 累计出货曲线，按抽卡顺序累计抽数与 6★ 数
+// 只计有效出货段，即各次出货消耗的水位之和，末次出货后的垫刀无对应出货故不计入，单独作 tailPulls 返回
+// 非继承池不参与，因为期望线按特许寻访规则（μ=CHAR_PITY_MU）推导
+export function calculateCumulativeCurve(items) {
+  const empty = { points: [], totalPulls: 0, sixStarCount: 0, tailPulls: 0 };
+  if (!items || !Array.isArray(items) || items.length === 0) return empty;
+
+  const sorted = [...items]
+    .filter(item => isDraw(item) && !item.isFree && !isStatsExcluded(item.poolId))
+    .sort((a, b) => Number(a.gachaTs) - Number(b.gachaTs) || Number(a.seqId) - Number(b.seqId));
+
+  const points = [{ pull: 0, six: 0 }];
+  let cum = 0;
+  let six = 0;
+  let streak = 0;
+  let lastPoolId = '';
+  let savedStreak = 0;
+  let tailPulls = 0;
+
+  for (const item of sorted) {
+    if (item.poolId !== lastPoolId) {
+      const wasExcluded = isPityExcluded(lastPoolId);
+      const nowExcluded = isPityExcluded(item.poolId);
+      if (nowExcluded && !wasExcluded) {
+        savedStreak = streak;
+        streak = 0;
+      } else if (!nowExcluded && wasExcluded) {
+        streak = savedStreak;
+      }
+      lastPoolId = item.poolId;
+      if (wasExcluded) tailPulls += savedStreak;
+    }
+    streak++;
+    if (item.rarity === 6) {
+      cum += streak;
+      six++;
+      points.push({ pull: cum, six });
+      streak = 0;
+    }
+  }
+  tailPulls += streak;
+
+  return { points, totalPulls: cum, sixStarCount: six, tailPulls };
+}
+
+// 理论累计期望曲线，横轴为累计抽数（武器池为件数），纵轴为累计 6★ 数
+// 角色池按 docs/luck-eval.md §2.1 的逐抽概率模型，用存活分布卷积求解
+//   alive[k] 为单周期垫到第 k 抽仍未出货的概率，start[n] 为单周期恰在第 n 抽开始的概率，
+//   q[n] = Σ start[n-i] · alive[i-1] · p(i) 为各周期起点与出货概率的卷积，expect[N] = Σ_{n≤N} q[n]
+// 武器池按 §2.2，保底判定单位是申领次数而非件数，故按申领建模后换算到件坐标
+export function calculateExpectedCurve(maxPulls, isWeapon = false) {
+  return isWeapon
+    ? buildWeaponExpectedCurve(maxPulls)
+    : buildCharExpectedCurve(maxPulls);
+}
+
+// 角色池：逐抽概率随水位递增，用存活分布卷积求解
+function buildCharExpectedCurve(maxPulls) {
+  const curve = [{ pull: 0, expect: 0 }];
+  if (!maxPulls || maxPulls <= 0) return curve;
+
+  const pOf = k => calcSingleProb(k - 1) / 100;
+
+  const alive = [1];
+  for (let k = 1; k <= CHAR_HARD_PITY; k++) {
+    alive[k] = alive[k - 1] * (1 - pOf(k));
+  }
+
+  const q = new Array(maxPulls + 1).fill(0);
+  const start = new Array(maxPulls + 1).fill(0);
+  start[1] = 1;
+
+  for (let n = 1; n <= maxPulls; n++) {
+    if (start[n] <= 0) continue;
+    for (let k = 1; k <= CHAR_HARD_PITY && n + k - 1 <= maxPulls; k++) {
+      const hitAt = n + k - 1;
+      const pHit = start[n] * alive[k - 1] * pOf(k);
+      q[hitAt] += pHit;
+      // 出货后开新周期
+      if (hitAt + 1 <= maxPulls) start[hitAt + 1] += pHit;
+    }
+  }
+
+  let expect = 0;
+  for (let n = 1; n <= maxPulls; n++) {
+    expect += q[n];
+    curve.push({ pull: n, expect: +expect.toFixed(4) });
+  }
+  return curve;
+}
+
+// 武器池：以申领次数为单位建模，再换算到件坐标
+// 每次申领 10 件，单次出 ≥1 个 6★ 的概率为 1 - 0.96^10，连续 3 次未出则第 4 次必出
+// 单周期内出货落在第 n 次申领的概率：p(1)=p0，p(2)=p0(1-p0)，p(3)=p0(1-p0)^2，p(4)=(1-p0)^3
+// 每个周期的期望出货数为 1，该期望在周期内按件均匀计入，故每件贡献 1/(claim*per)
+function buildWeaponExpectedCurve(maxPulls) {
+  const curve = [{ pull: 0, expect: 0 }];
+  if (!maxPulls || maxPulls <= 0) return curve;
+
+  const per = WEAPON_PULLS_PER_CLAIM;
+  const p0 = 1 - Math.pow(1 - WEAPON_BASE_RATE / 100, per);
+
+  // 单周期内出货落在第 n 次申领的概率
+  const claimDist = [];
+  let alive = 1;
+  for (let n = 1; n <= WEAPON_CLAIM_HARD_PITY; n++) {
+    const p = n === WEAPON_CLAIM_HARD_PITY ? 1 : p0;
+    claimDist.push({ claim: n, pmf: alive * p });
+    alive *= (1 - p);
+  }
+
+  // 每件期望出货数：每个周期的期望出货为 1 个，周期期望长度为 Σ (claim*per)*pmf，
+  // 故每件期望 = 1 / 周期期望长度（注意不可写成 Σ pmf/(claim*per)，那是「长度的倒数的期望」）
+  const avgCyclePieces = claimDist.reduce((sum, d) => sum + d.claim * per * d.pmf, 0);
+  const perPieceExpect = 1 / avgCyclePieces;
+
+  let expect = 0;
+  for (let n = 1; n <= maxPulls; n++) {
+    expect += perPieceExpect;
+    curve.push({ pull: n, expect: +expect.toFixed(4) });
+  }
+  return curve;
 }
 
 // 统计命中 UP 的 6★ 数量（用于 UP 命中率欧非）

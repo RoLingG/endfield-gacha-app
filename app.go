@@ -377,7 +377,7 @@ func (a *App) OpenOfficialLoginWindow() (LoginResponse, error) {
 		logger.Log.Error("Login window closed or failed", zap.Error(err))
 		return LoginResponse{}, err
 	}
-	logger.Log.Info("Token retrieved successfully", zap.String("token_part", token[:10]+"..."))
+	logger.Log.Info("Token retrieved successfully", zap.Int("token_len", len(token)))
 	hgToken, err := api.GetGrantToken(token)
 	if err != nil {
 		logger.Log.Error("Failed to exchange grant token", zap.Error(err))

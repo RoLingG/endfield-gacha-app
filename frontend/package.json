@@ -17,6 +17,7 @@
     "rollup": "^3.29.4"
   },
   "dependencies": {
-    "@wailsio/runtime": "^3.0.0-alpha.72"
+    "@wailsio/runtime": "^3.0.0-alpha.72",
+    "chart.js": "^4.5.1"
   }
 }

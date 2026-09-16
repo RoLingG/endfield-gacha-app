@@ -118,7 +118,10 @@ export function createPoolButtons(dataMap, onPoolChange, type = 'char') {
       pools.push(poolName);
     }
   });
-  setCurrentPool(pools[pools.length - 1]);
+  // 优先保留该类型下用户做过的已有选择；仅当它不在当前池列表时才回落到默认（最新池）
+  const previousPool = getCurrentPool(type);
+  const initialPool = pools.includes(previousPool) ? previousPool : pools[pools.length - 1];
+  setCurrentPool(initialPool, type);
 
   const display = document.createElement('div');
   display.className = 'pool-display';
@@ -135,12 +138,12 @@ export function createPoolButtons(dataMap, onPoolChange, type = 'char') {
     const item = document.createElement('div');
     item.className = 'pool-menu-item';
     item.textContent = poolName;
-    if (poolName === getCurrentPool()) {
+    if (poolName === getCurrentPool(type)) {
       item.classList.add('active');
     }
     item.addEventListener('click', () => {
       display.textContent = poolName;
-      setCurrentPool(poolName);
+      setCurrentPool(poolName, type);
       document.querySelectorAll('.pool-menu-item').forEach(i => {
         i.classList.remove('active');
       });

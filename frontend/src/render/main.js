@@ -2,17 +2,19 @@ import {
   getCurrentType, setCurrentType,
   getLastDataType, setLastDataType,
   getGlobalCharData, getGlobalWeaponData,
-  getCurrentPool, setCurrentPool, setCurrentAllPoolsData,
+  getCurrentPool, setCurrentPool, resetCurrentPool, setCurrentAllPoolsData,
   setIsAllPoolsMode, getIsAllPoolsMode, setCurrentHistoryPage,
   getGlobalPoolConfig, getComingFromStats, setComingFromStats,
 } from '../state.js';
 import { createPoolButtons } from '../pool.js';
-import { mergeAllPoolsData, calculateAvgPity, calculateMaxDrought, calculateMonthlyStats, calculatePityDistribution, calculateLuckLevel, calculateUpLevel, calculateUpCount } from '../data.js';
-import { updateOrCreateChart, renderPityDistributionChart, renderMonthlyTrendChart, destroyStatsCharts } from './chart.js';
+import { mergeAllPoolsData, calculateAvgPity, calculateMaxDrought, calculateMonthlyStats, calculatePityDistribution, calculateLuckLevel, calculateUpLevel, calculateUpCount, calculateCumulativeCurve } from '../data.js';
+import { updateOrCreateChart, renderPityDistributionChart, renderMonthlyTrendChart, renderCumulativeChart, destroyStatsCharts } from './chart.js';
 import { createSummaryStrip, createAllPoolsSummaryStrip } from './summary.js';
 import { createRareRecordCard, createAllPoolsRareRecordsCard } from './rare.js';
 import { setPoolSelectorVisibility, updateSummaryStripVisibility, clearDisplay } from '../utils.js';
 import { createHistoryTable, createAllPoolsHistoryTable, renderEmptyHistoryTable, updateHistoryPaginationUI } from './history.js';
+import { renderUpRecordTable } from './uprecord.js';
+import { renderPoolProfile, renderRarityStack } from './profile.js';
 import { t } from '../i18n.js';
 
 // 核心切换逻辑
@@ -63,14 +65,16 @@ export function switchType(type) {
     }
   }
 
+  // STATS 保持进入前的模式，其余类型按 type 设定
+  if (type !== 'stats') {
+    setIsAllPoolsMode(type === 'all');
+  }
+
+  // 池子选择器显隐：STATS 由 renderStatsTab 自行控制
   if (type === 'all') {
-    setIsAllPoolsMode(true);
     if (poolSelectorWrapper && poolSelectorWrapper.style.opacity !== '0')
       setPoolSelectorVisibility(poolSelectorWrapper, false);
-  } else if (type === 'stats') {
-    // stats 模式：不修改 isAllPoolsMode，池子选择器在 renderStatsTab 中控制
-  } else {
-    setIsAllPoolsMode(false);
+  } else if (type !== 'stats') {
     if (poolSelectorWrapper && poolSelectorWrapper.style.opacity === '0')
       setPoolSelectorVisibility(poolSelectorWrapper, true);
   }
@@ -118,7 +122,6 @@ export function renderByType(type) {
   }
 
   updateSummaryStripVisibility(true);
-  setCurrentPool(Object.keys(dataMap)[0]);
   createPoolButtons(dataMap, updateDisplay, type);
   updateDisplay(dataMap, getCurrentPool());
 
@@ -140,7 +143,7 @@ export function renderNoDataState({
   hidePoolSelector = false
 } = {}) {
   clearDisplay();
-  setCurrentPool(null);
+  resetCurrentPool();
   setCurrentAllPoolsData(null);
 
   const poolSelectorWrapper = document.getElementById('poolSelectorWrapper');
@@ -239,6 +242,12 @@ function renderStatsTab() {
 
   // 单池模式：确保池子选择器完全可见，再创建按钮
   if (poolSelectorWrapper) {
+    // 直接落终态而非走动画，需同步状态标记并摘掉上一轮监听，避免状态与实际不符
+    poolSelectorWrapper.dataset.poolSelState = 'shown';
+    if (poolSelectorWrapper._poolSelEnd) {
+      poolSelectorWrapper.removeEventListener('transitionend', poolSelectorWrapper._poolSelEnd);
+      poolSelectorWrapper._poolSelEnd = null;
+    }
     poolSelectorWrapper.style.transition = 'none';
     poolSelectorWrapper.style.height = '';
     poolSelectorWrapper.style.opacity = '1';
@@ -275,6 +284,16 @@ function renderStatsContent(items, isAllPools) {
     if (pityDistBody) pityDistBody.innerHTML = `<div style="color:#666;padding:40px;text-align:center;font-weight:bold;">${t('stats.noData')}</div>`;
     if (monthlyBody) monthlyBody.innerHTML = '';
     if (monthlyContainer) monthlyContainer.style.display = 'none';
+    const cumulativeContainer = document.getElementById('cumulativeChartContainer');
+    if (cumulativeContainer) cumulativeContainer.style.display = 'none';
+    ['upRecordContainer', 'poolProfileContainer', 'rarityStackContainer'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    ['upRecordBody', 'poolProfileBody', 'rarityStackBody'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = '';
+    });
     destroyStatsCharts();
     return;
   }
@@ -285,6 +304,23 @@ function renderStatsContent(items, isAllPools) {
   // 统计卡片
   const avg = calculateAvgPity(items);
   const drought = calculateMaxDrought(items);
+  // 口径说明，解释数字与原始记录条数不一致的原因
+  const avgInfo = {
+    head: t('stats.avgPityInfoHead'),
+    rows: [
+      [t('stats.infoRuleFree'), t('stats.infoRuleFreeVal')],
+      [t('stats.infoRuleExcluded'), t('stats.infoRuleExcludedVal')],
+    ],
+    desc: t('stats.avgPityInfoDesc'),
+  };
+  const droughtInfo = {
+    head: t('stats.droughtInfoHead'),
+    rows: [
+      [t('stats.infoRuleFree'), t('stats.infoRuleFreeVal')],
+      [t('stats.infoRuleExcluded'), t('stats.infoRuleExcludedVal')],
+    ],
+    desc: t('stats.droughtInfoDesc'),
+  };
   if (statsCardsRow) {
     let avgSub = t('stats.total6Star', { count: avg.sixStarCount });
     if (isAllPools) {
@@ -297,8 +333,9 @@ function renderStatsContent(items, isAllPools) {
       if (tags.length) avgSub = `${avgSub} · ${tags.join(' · ')}`;
     }
     statsCardsRow.innerHTML =
-      createStatCard(t('stats.avgPity'), avg.avgPity, avgSub) +
-      createStatCard(t('stats.maxDrought'), drought.maxDrought, t('stats.currentDrought', { count: drought.currentDrought }));
+      createStatCard(t('stats.avgPity'), avg.avgPity, avgSub, avgInfo) +
+      createStatCard(t('stats.maxDrought'), drought.maxDrought,
+        t('stats.currentDrought', { count: drought.currentDrought }), droughtInfo);
   }
 
   // 抽数分布图（始终显示）
@@ -314,13 +351,69 @@ function renderStatsContent(items, isAllPools) {
   } else {
     if (monthlyContainer) monthlyContainer.style.display = 'none';
   }
+
+  // 累计出货曲线（汇总模式才显示）
+  const cumulativeContainer = document.getElementById('cumulativeChartContainer');
+  if (isAllPools) {
+    const curve = calculateCumulativeCurve(items);
+    if (cumulativeContainer) cumulativeContainer.style.display = '';
+    renderCumulativeChart(curve, isWeapon);
+  } else {
+    if (cumulativeContainer) cumulativeContainer.style.display = 'none';
+  }
+
+  // 统计附加图：UP 战绩表挂 ALL 汇总；池子剖面与稀有度成分挂单池
+  const containerUpRecord = document.getElementById('upRecordContainer');
+  const containerPoolProfile = document.getElementById('poolProfileContainer');
+  const containerRarityStack = document.getElementById('rarityStackContainer');
+  const dataMap = (isWeapon ? getGlobalWeaponData() : getGlobalCharData()) || {};
+  if (isAllPools) {
+    if (containerUpRecord) {
+      containerUpRecord.style.display = '';
+      renderUpRecordTable(items);
+    }
+    if (containerPoolProfile) containerPoolProfile.style.display = 'none';
+    if (containerRarityStack) containerRarityStack.style.display = 'none';
+  } else {
+    if (containerUpRecord) containerUpRecord.style.display = 'none';
+    if (containerPoolProfile) {
+      containerPoolProfile.style.display = '';
+      renderPoolProfile(dataMap, getCurrentPool());
+    }
+    if (containerRarityStack) {
+      containerRarityStack.style.display = '';
+      renderRarityStack(dataMap, getCurrentPool());
+    }
+  }
 }
 
-function createStatCard(label, value, sub) {
+// info 可选，形如 { head, rows, desc }，传入时在卡片内渲染规则说明 popover
+function createStatCard(label, value, sub, info) {
   return `<div class="stats-card">
     <div class="stats-card-label">${label}</div>
     <div class="stats-card-value">${value}</div>
     <div class="stats-card-sub">${sub}</div>
+    ${info ? renderInfoPop(info) : ''}
+  </div>`;
+}
+
+// 规则说明 popover，复用 .cc-info 样式，图标用 SVG 保证居中
+const INFO_ICON_SVG =
+  '<svg viewBox="0 0 16 16" aria-hidden="true">' +
+  '<rect x="7.2" y="3.6" width="1.6" height="5.6" rx="0.8"/>' +
+  '<circle cx="8" cy="11.8" r="1"/></svg>';
+
+export function renderInfoPop({ head, rows = [], desc = '' }) {
+  const rowsHtml = rows
+    .map(r => `<div class="cc-info-pop__row"><span>${r[0]}</span><b>${r[1]}</b></div>`)
+    .join('');
+  const descHtml = desc ? `<div class="cc-info-pop__sep"></div><div class="cc-info-pop__desc">${desc}</div>` : '';
+  return `<div class="cc-info">
+    <span class="cc-info-icon">${INFO_ICON_SVG}</span>
+    <div class="cc-info-pop">
+      <div class="cc-info-pop__head">${head}</div>
+      ${rowsHtml}${descHtml}
+    </div>
   </div>`;
 }
 
