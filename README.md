@@ -1,8 +1,14 @@
+<div align="center">
+
+<img src="https://rolingg.top/images/EndField/appicon.png" alt="EndField Gacha" width="120" />
+
 # Endfield Gacha App // 终末地寻访记录终端
 
-[![Go Version](https://img.shields.io/badge/Go-%3E%3D1.24-00ADD8.svg)](https://go.dev) ![Wails](https://img.shields.io/badge/Wails-2.0+-C70039.svg) [![Frontend](https://img.shields.io/badge/Frontend-JavaScript-F7DF1E.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript) [![Node](https://img.shields.io/badge/Node-%3E%3D24-green.svg)](LICENSE) [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) ![Release](https://img.shields.io/github/v/release/RoLingG/endfield-gacha-app?style=flat&color=orange) ![Last Commit](https://img.shields.io/github/last-commit/RoLingG/endfield-gacha-app?style=flat&color=purple)
+[![Go Version](https://img.shields.io/badge/Go-%3E%3D1.24-00ADD8.svg)](https://go.dev) ![Wails](https://img.shields.io/badge/Wails-2.0+-C70039.svg) [![Frontend](https://img.shields.io/badge/Frontend-JavaScript-F7DF1E.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript) [![Node](https://img.shields.io/badge/Node-%3E%3D24-green.svg)](LICENSE) [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) ![Release](https://img.shields.io/github/v/release/RoLingG/EndField_Gacha_App?style=flat&color=orange) ![Last Commit](https://img.shields.io/github/last-commit/RoLingG/EndField_Gacha_App?style=flat&color=purple)
 
-一个极简、安全且具有沉浸式**终末地 (Endfield) 工业风格**的明日方舟官服/B服抽卡记录分析工具。
+</div>
+
+一个极简、安全且具有沉浸式**终末地 (Endfield) 工业风格**的官服/B服抽卡记录分析工具。
 基于 Wails 构建，无需上传数据，完全本地处理数据，提供良好的数据可视化体验。
 
 ![Preview](https://rolingg.top/images/EndField/efaimg1.png)
@@ -36,8 +42,15 @@
     - *注意：**[ MODE C ]** 仅支持本软件同步下来的 Json 文件，导入其他软件的 Json 文件可能会出错。*
 - **可视化仪表盘**:
   - 动态环形图展示 4/5/6 星稀有度分布。
-  - 详细的时间轴记录列表与分页查询。
+  - 详细的历史记录列表与分页查询、排序筛选。
   - 支持终末地特殊的保底机制（80抽保底 / 120、240 井）进度追踪，自动计算是否触发垫刀逻辑。
+
+### 📈 统计分析 (Statistics)
+
+- **多维度统计**: 抽数分布、月度趋势、累计出货曲线、池子剖面、稀有度成分五张图表，角色池与武器池分别统计。
+- **欧非评定**: 按出货速度与 UP 命中率双维度评定欧非等级，并与理论期望对比。
+- **UP 命中记录表**: 汇总各 UP 池的抽数 / 6★ / 出货率 / 均水位 / 歪率 / 最深记录，支持表头排序与极值着色。
+- **口径透明**: 所有统计均排除免费抽与不参与继承的池（基础寻访 / 启程寻访），图表附规则说明。
 
 > [!NOTE]
 >
@@ -88,7 +101,7 @@
 - **Frontend**:
   - **HTML5 / CSS3**: 自定义 CSS Variables，Flex 布局，复刻游戏内动效。
   - **JavaScript**: 原生 JS 模块化开发，无繁重框架依赖。
-  - **Chart.js**: 数据可视化图表绘制。
+  - **Chart.js**: 数据可视化图表绘制，随构建打包，无外部 CDN 依赖。
   - **MDUI**: 辅助 UI 组件库。
 
 ## 🚀 使用指南 (Usage)
@@ -129,7 +142,7 @@
 
 ## 📂 目录结构 (Directory)
 
-数据默认存储在用户配置目录下，可通过界面顶部的 `[ DATA_FOLDER ]` 按钮直接访问。文件名已更新以支持多服隔离（前提是使用短 Token 获取方式）：
+数据默认存储在软件同目录的 `userdata` 下，可通过界面顶部的 `[ DATA_FOLDER ]` 按钮直接访问。文件名已更新以支持多服隔离（前提是使用短 Token 获取方式）：
 
 ```
 userdata/
