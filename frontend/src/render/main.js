@@ -13,7 +13,7 @@ import { createSummaryStrip, createAllPoolsSummaryStrip } from './summary.js';
 import { createRareRecordCard, createAllPoolsRareRecordsCard } from './rare.js';
 import { setPoolSelectorVisibility, updateSummaryStripVisibility, clearDisplay } from '../utils.js';
 import { createHistoryTable, createAllPoolsHistoryTable, renderEmptyHistoryTable, updateHistoryPaginationUI } from './history.js';
-import { renderUpRecordTable } from './uprecord.js';
+import { renderUpHitRecordTable } from './uphitrecord.js';
 import { renderPoolProfile, renderRarityStack } from './profile.js';
 import { t } from '../i18n.js';
 
@@ -286,11 +286,11 @@ function renderStatsContent(items, isAllPools) {
     if (monthlyContainer) monthlyContainer.style.display = 'none';
     const cumulativeContainer = document.getElementById('cumulativeChartContainer');
     if (cumulativeContainer) cumulativeContainer.style.display = 'none';
-    ['upRecordContainer', 'poolProfileContainer', 'rarityStackContainer'].forEach(id => {
+    ['upHitRecordContainer', 'poolProfileContainer', 'rarityStackContainer'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });
-    ['upRecordBody', 'poolProfileBody', 'rarityStackBody'].forEach(id => {
+    ['upHitRecordBody', 'poolProfileBody', 'rarityStackBody'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.innerHTML = '';
     });
@@ -362,20 +362,20 @@ function renderStatsContent(items, isAllPools) {
     if (cumulativeContainer) cumulativeContainer.style.display = 'none';
   }
 
-  // 统计附加图：UP 战绩表挂 ALL 汇总；池子剖面与稀有度成分挂单池
-  const containerUpRecord = document.getElementById('upRecordContainer');
+  // 统计附加图：UP 命中记录表挂 ALL 汇总；池子剖面与稀有度成分挂单池
+  const containerUpHitRecord = document.getElementById('upHitRecordContainer');
   const containerPoolProfile = document.getElementById('poolProfileContainer');
   const containerRarityStack = document.getElementById('rarityStackContainer');
   const dataMap = (isWeapon ? getGlobalWeaponData() : getGlobalCharData()) || {};
   if (isAllPools) {
-    if (containerUpRecord) {
-      containerUpRecord.style.display = '';
-      renderUpRecordTable(items);
+    if (containerUpHitRecord) {
+      containerUpHitRecord.style.display = '';
+      renderUpHitRecordTable(items);
     }
     if (containerPoolProfile) containerPoolProfile.style.display = 'none';
     if (containerRarityStack) containerRarityStack.style.display = 'none';
   } else {
-    if (containerUpRecord) containerUpRecord.style.display = 'none';
+    if (containerUpHitRecord) containerUpHitRecord.style.display = 'none';
     if (containerPoolProfile) {
       containerPoolProfile.style.display = '';
       renderPoolProfile(dataMap, getCurrentPool());

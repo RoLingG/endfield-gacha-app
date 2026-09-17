@@ -586,9 +586,9 @@ export function calculateRarityStack(dataMap, poolOrder) {
   return stacks;
 }
 
-// UP 抽卡命中数据，按 UP 目标聚合本类型全部 UP 池战绩（歪池计入所属 UP 行，无配置池不参与）
+// UP 抽卡命中数据，按 UP 目标聚合本类型全部 UP 池命中记录（歪池计入所属 UP 行，无配置池不参与）
 // 每行含：抽数 / 6★ 数 / 出货率 / 均水位 / 歪率 / 最深水位
-export function calculateUpRecords(items, poolConfig = {}) {
+export function calculateUpHitRecords(items, poolConfig = {}) {
   if (!items || !Array.isArray(items) || items.length === 0) return DEFAULT_ARRAY;
 
   const sorted = [...items]
@@ -635,7 +635,7 @@ export function calculateUpRecords(items, poolConfig = {}) {
       const upName = poolConfig[item.poolName];
       if (!upName) {
         streak = 0;
-        continue; // 常驻池无 UP 配置，不参与战绩表
+        continue; // 常驻池无 UP 配置，不参与命中记录表
       }
       const rec = ensureRow(upName);
       rec.sixStarCount++;

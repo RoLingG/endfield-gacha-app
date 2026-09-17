@@ -1,4 +1,4 @@
-import { calculateUpRecords } from '../data.js';
+import { calculateUpHitRecords } from '../data.js';
 import { getGlobalPoolConfig } from '../state.js';
 import { t } from '../i18n.js';
 
@@ -7,13 +7,13 @@ let sortKey = 'pulls';
 let sortAsc = false;
 
 // UP 命中记录表渲染（ALL 汇总用）；items 为该类型全池合并记录
-export function renderUpRecordTable(items) {
-  const body = document.getElementById('upRecordBody');
+export function renderUpHitRecordTable(items) {
+  const body = document.getElementById('upHitRecordBody');
   if (!body) return;
 
-  const records = calculateUpRecords(items, getGlobalPoolConfig() || {});
+  const records = calculateUpHitRecords(items, getGlobalPoolConfig() || {});
   if (!records || records.length === 0) {
-    body.innerHTML = `<div class="stats-chart-empty">${t('stats.upBattleEmpty')}</div>`;
+    body.innerHTML = `<div class="stats-chart-empty">${t('stats.upHitRecordEmpty')}</div>`;
     return;
   }
 
@@ -51,21 +51,21 @@ export function renderUpRecordTable(items) {
       return `<th style="${style}">${c.label}</th>`;
     }
     const active = c.key === sortKey;
-    return `<th class="up-record-table__sort${active ? ' sorted' : ''}" data-key="${c.key}" style="${style}">
+    return `<th class="up-hit-record-table__sort${active ? ' sorted' : ''}" data-key="${c.key}" style="${style}">
               ${c.label}${active ? (sortAsc ? ' ▲' : ' ▼') : ''}
             </th>`;
   }).join('');
 
   const rowsHtml = sorted.map(rec => {
-    const rateCls = rec.rate === bestRate ? ' up-record-table__rate-best'
-      : (rec.rate === worstRate && bestRate !== worstRate) ? ' up-record-table__rate-worst' : '';
-    const deepestCls = (rec.deepest === deepestMax && deepestMax > 0) ? ' up-record-table__deepest-max' : '';
+    const rateCls = rec.rate === bestRate ? ' up-hit-record-table__rate-best'
+      : (rec.rate === worstRate && bestRate !== worstRate) ? ' up-hit-record-table__rate-worst' : '';
+    const deepestCls = (rec.deepest === deepestMax && deepestMax > 0) ? ' up-hit-record-table__deepest-max' : '';
     const cell = (c, content, extraCls = '', title = '') =>
       `<td class="${extraCls}" style="text-align:${alignOf(c)}"${title ? ` title="${title}"` : ''}>${content}</td>`;
     const poolsText = [...rec.pools].join(' / ');
     return `<tr>
-      ${cell(cols[0], rec.upName, 'up-record-table__name')}
-      ${cell(cols[1], poolsText, 'up-record-table__pools', poolsText)}
+      ${cell(cols[0], rec.upName, 'up-hit-record-table__name')}
+      ${cell(cols[1], poolsText, 'up-hit-record-table__pools', poolsText)}
       ${cell(cols[2], rec.pulls)}
       ${cell(cols[3], rec.sixStarCount)}
       ${cell(cols[4], `${rec.rate}%`, rateCls.trim())}
@@ -76,17 +76,17 @@ export function renderUpRecordTable(items) {
   }).join('');
 
   body.innerHTML =
-    `<table class="up-record-table">
+    `<table class="up-hit-record-table">
       <tr>${headHtml}</tr>
       ${rowsHtml}
     </table>`;
 
-  body.querySelectorAll('.up-record-table__sort').forEach(th => {
+  body.querySelectorAll('.up-hit-record-table__sort').forEach(th => {
     th.addEventListener('click', () => {
       const k = th.dataset.key;
       if (k === sortKey) sortAsc = !sortAsc;
       else { sortKey = k; sortAsc = false; }
-      renderUpRecordTable(items);
+      renderUpHitRecordTable(items);
     });
   });
 }

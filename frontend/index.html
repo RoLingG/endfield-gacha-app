@@ -163,7 +163,7 @@
         <div class="stats-charts">
             <div class="stats-chart-box" id="pityDistChartContainer">
                 <div class="stats-chart-title">
-                    <span data-i18n="stats.pityDistribution">[ PITY DISTRIBUTION / 抽数分布 ]</span>
+                    <span data-i18n="stats.pityDistribution">[ PITY DISTRIBUTION // 抽数分布 ]</span>
                     <span class="cc-info">
                         <span class="cc-info-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="7.2" y="3.6" width="1.6" height="5.6" rx="0.8"/><circle cx="8" cy="11.8" r="1"/></svg></span>
                         <div class="cc-info-pop">
@@ -179,7 +179,7 @@
             </div>
             <div class="stats-chart-box" id="monthlyChartContainer" style="display:none;">
                 <div class="stats-chart-title">
-                    <span data-i18n="stats.monthlyTrend">[ MONTHLY TREND / 月度趋势 ]</span>
+                    <span data-i18n="stats.monthlyTrend">[ MONTHLY TREND // 月度趋势 ]</span>
                     <span class="cc-info">
                         <span class="cc-info-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="7.2" y="3.6" width="1.6" height="5.6" rx="0.8"/><circle cx="8" cy="11.8" r="1"/></svg></span>
                         <div class="cc-info-pop">
@@ -194,7 +194,7 @@
                 <div class="stats-chart-body" id="monthlyChartBody"></div>
             </div>
             <div class="stats-chart-box" id="cumulativeChartContainer" style="display:none;">
-                <div class="stats-chart-title" data-i18n="stats.cumulative">[ CUMULATIVE 6★ / 累计出货曲线 ]</div>
+                <div class="stats-chart-title" data-i18n="stats.cumulative">[ CUMULATIVE 6★ // 累计出货曲线 ]</div>
                 <div class="stats-chart-body" id="cumulativeChartBody">
                     <div class="cc-info">
                         <span class="cc-info-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="7.2" y="3.6" width="1.6" height="5.6" rx="0.8"/><circle cx="8" cy="11.8" r="1"/></svg></span>
@@ -216,16 +216,16 @@
             </div>
         </div>
         <div class="stats-charts">
-            <div class="stats-chart-box" id="upRecordContainer" style="display:none;">
-                <div class="stats-chart-title" data-i18n="stats.upBattle">[ UP HIT RECORDS / UP命中记录 ]</div>
-                <div class="stats-chart-body" id="upRecordBody"></div>
+            <div class="stats-chart-box" id="upHitRecordContainer" style="display:none;">
+                <div class="stats-chart-title" data-i18n="stats.upHitRecord">[ UP HIT RECORDS // UP命中记录 ]</div>
+                <div class="stats-chart-body" id="upHitRecordBody"></div>
             </div>
             <div class="stats-chart-box" id="poolProfileContainer" style="display:none;">
-                <div class="stats-chart-title" data-i18n="stats.poolProfile">[ POOL PROFILE / 池子剖面 ]</div>
+                <div class="stats-chart-title" data-i18n="stats.poolProfile">[ POOL PROFILE // 池子剖面 ]</div>
                 <div class="stats-chart-body" id="poolProfileBody"></div>
             </div>
             <div class="stats-chart-box" id="rarityStackContainer" style="display:none;">
-                <div class="stats-chart-title" data-i18n="stats.rarityStack">[ RARITY STACK / 稀有度成分 ]</div>
+                <div class="stats-chart-title" data-i18n="stats.rarityStack">[ RARITY STACK // 稀有度成分 ]</div>
                 <div class="stats-chart-body" id="rarityStackBody"></div>
             </div>
         </div>
@@ -1745,14 +1745,14 @@
     .cc-info-pop__desc b { color: #ddd; }
 
     /* ---- UP 命中记录表 ---- */
-    .up-record-table {
+    .up-hit-record-table {
         width: 100%;
         border-collapse: collapse;
         font-family: 'Consolas', monospace;
         font-size: 11px;
         table-layout: fixed;
     }
-    .up-record-table th {
+    .up-hit-record-table th {
         font-weight: bold;
         color: var(--ef-yellow);
         padding: 7px 10px;
@@ -1761,7 +1761,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    .up-record-table td {
+    .up-hit-record-table td {
         color: #aaa;
         padding: 7px 10px;
         border-bottom: 1px solid #282828;
@@ -1769,14 +1769,14 @@
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-    .up-record-table__sort { cursor: pointer; user-select: none; transition: color .15s; }
-    .up-record-table__sort:hover { color: #fff; text-shadow: 0 0 5px var(--ef-yellow); }
-    .up-record-table__sort.sorted { color: var(--ef-yellow); }
-    .up-record-table__name { color: #eee; font-weight: bold; }
-    .up-record-table__pools { color: #777; font-size: 10px; }
-    .up-record-table__rate-best { color: #7dd87d; font-weight: bold; }
-    .up-record-table__rate-worst { color: #ff6b6b; font-weight: bold; }
-    .up-record-table__deepest-max { color: #ff5722; font-weight: bold; }
+    .up-hit-record-table__sort { cursor: pointer; user-select: none; transition: color .15s; }
+    .up-hit-record-table__sort:hover { color: #fff; text-shadow: 0 0 5px var(--ef-yellow); }
+    .up-hit-record-table__sort.sorted { color: var(--ef-yellow); }
+    .up-hit-record-table__name { color: #eee; font-weight: bold; }
+    .up-hit-record-table__pools { color: #777; font-size: 10px; }
+    .up-hit-record-table__rate-best { color: #7dd87d; font-weight: bold; }
+    .up-hit-record-table__rate-worst { color: #ff6b6b; font-weight: bold; }
+    .up-hit-record-table__deepest-max { color: #ff5722; font-weight: bold; }
 
     /* ---- 卡池剖面图 ---- */
     #poolProfileBody {
@@ -2643,13 +2643,13 @@
     }
 
     /* ---- day 主题，统计附加图 ---- */
-    .theme-day .up-record-table th { border-bottom-color: #cfcfc7; }
-    .theme-day .up-record-table td { color: #555; border-bottom-color: #e2e2da; }
-    .theme-day .up-record-table__name { color: #1f1f1f; }
-    .theme-day .up-record-table__pools { color: #999; }
-    .theme-day .up-record-table__rate-best { color: #1f7a1f; }
-    .theme-day .up-record-table__rate-worst { color: #c0392b; }
-    .theme-day .up-record-table__sort:hover { color: #1f1f1f; text-shadow: none; }
+    .theme-day .up-hit-record-table th { border-bottom-color: #cfcfc7; }
+    .theme-day .up-hit-record-table td { color: #555; border-bottom-color: #e2e2da; }
+    .theme-day .up-hit-record-table__name { color: #1f1f1f; }
+    .theme-day .up-hit-record-table__pools { color: #999; }
+    .theme-day .up-hit-record-table__rate-best { color: #1f7a1f; }
+    .theme-day .up-hit-record-table__rate-worst { color: #c0392b; }
+    .theme-day .up-hit-record-table__sort:hover { color: #1f1f1f; text-shadow: none; }
     .theme-day .cc-info-icon { border-color: #bdbdb0; color: #888; }
     .theme-day .cc-info-pop { background: #fdfdfa; border-color: var(--ef-yellow); }
     .theme-day .cc-info-pop__row b { color: #333; }
