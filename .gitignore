@@ -8,6 +8,9 @@ cmd/sync_poolConfig
 node_modules
 frontend/package.json.md5
 
+# 测试文件
+*_test.go
+
 # 编辑器
 .idea
 .claude
