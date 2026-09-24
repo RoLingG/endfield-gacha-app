@@ -7,6 +7,7 @@
   "menu.cancelFetch": "[ CANCEL_FETCH ]",
   "menu.modeNight": "[ MODE: NIGHT ]",
   "menu.modeDay": "[ MODE: DAY ]",
+  "menu.checkUpdate": "[ CHECK_UPDATE ]",
 
   "login.terminalAccess": "TERMINAL ACCESS",
   "login.subtitle": "终末地寻访记录",
@@ -60,6 +61,10 @@
   "snackbar.updateFailed": "[ERROR] 更新失败 // Update failed: ",
   "snackbar.tokenFailed": "[ERROR] 处理 Token 失败: ",
   "snackbar.emptyPools": "[WARNING] 当前卡池数据为空",
+  "update.available": "[UPDATE] 新版本 {latest} // Update Available",
+  "update.gotoDownload": "DOWNLOAD // 前往下载",
+  "update.upToDate": "[SUCCESS] 已是最新版本 {current} // Already Up To Date",
+  "update.checkFailed": "[ERROR] 版本检测失败，请检查网络后重试 // Version Check Failed",
 
   "main.title": "STATISTICS // 寻访数据概览",
 

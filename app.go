@@ -7,6 +7,7 @@ import (
 	"Go_Arknights_Gacha_App/internal/logger"
 	"Go_Arknights_Gacha_App/internal/model"
 	"Go_Arknights_Gacha_App/internal/storage"
+	"Go_Arknights_Gacha_App/internal/update"
 	"context"
 	_ "embed"
 	"encoding/json"
@@ -614,6 +615,19 @@ func (a *App) GetPoolConfig() (*model.PoolConfigList, error) {
 		return nil, err
 	}
 	return config, nil
+}
+
+// CheckUpdate 检测是否有新版本，检测失败时 HasUpdate 为 false
+func (a *App) CheckUpdate() model.UpdateInfo {
+	info := model.UpdateInfo{CurrentVersion: appVersion}
+	if appVersion == "" {
+		return info
+	}
+	result := update.Check(appVersion)
+	info.LatestVersion = result.LatestVersion
+	info.ReleaseURL = result.ReleaseURL
+	info.HasUpdate = result.HasUpdate
+	return info
 }
 
 // ================= Data Grouping Helpers =================

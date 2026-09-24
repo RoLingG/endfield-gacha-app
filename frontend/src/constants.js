@@ -56,6 +56,8 @@ export const WEAPON_UP_RATE = 0.25;         // 武器池出 6★ 时 UP 占比
 
 // UI 常量
 export const SNACKBAR_AUTO_CLOSE = 4500;    // snackbar 自动关闭延迟 (ms)
+export const UPDATE_CHECK_DELAY = 3000;     // 启动后延迟检测新版本 (ms)
+export const UPDATE_SNACKBAR_DELAY = 15000; // 更新提示停留时长，需留足阅读与点击时间 (ms)
 
 // Fallback 角色卡池配置（API 加载失败时使用）
 export const FALLBACK_CHAR_POOL_CONFIG = {

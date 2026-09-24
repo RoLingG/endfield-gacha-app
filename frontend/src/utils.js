@@ -4,15 +4,33 @@ import { SNACKBAR_AUTO_CLOSE, JADE_PER_PULL, JADE_PER_STONE, WEAPON_QUOTA_PER_TE
          WEAPON_QUOTA_6STAR, WEAPON_QUOTA_5STAR, WEAPON_QUOTA_4STAR } from './constants.js';
 
 // Snackbar 通知封装
+// action 可选，形如 { label, onClick }，传入时在文案右侧渲染一个可点按钮
 export function showAppSnackbar({
   message = "",
   type = "info",
   autoCloseDelay = SNACKBAR_AUTO_CLOSE,
   closeable = false,
+  action = null,
 } = {}) {
   const el = document.createElement("div");
   el.className = `app-snackbar app-snackbar--${type}`;
-  el.textContent = message;
+
+  if (action?.label && typeof action.onClick === "function") {
+    const text = document.createElement("span");
+    text.textContent = message;
+    const btn = document.createElement("button");
+    btn.className = "app-snackbar__action";
+    btn.type = "button";
+    btn.textContent = action.label;
+    el.append(text, btn);
+    // 按钮点击不触发外层的关闭逻辑
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      action.onClick();
+    });
+  } else {
+    el.textContent = message;
+  }
 
   // 关闭函数，先播放退场动画，动画结束后移除 DOM
   const dismiss = () => {

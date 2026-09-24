@@ -7,6 +7,8 @@ export function CancelCurrentOperation():Promise<void>;
 
 export function CheckLocalFiles():Promise<Array<model.LocalArchive>>;
 
+export function CheckUpdate():Promise<model.UpdateInfo>;
+
 export function DeleteLocalGachaHistory(arg1:string):Promise<void>;
 
 export function ExportData(arg1:string,arg2:string):Promise<string>;

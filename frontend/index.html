@@ -22,6 +22,7 @@
     <span class="fake-menu-item" id="btnExportData" data-i18n="menu.exportData">[ EXPORT_DATA ]</span>
     <span class="fake-menu-item" id="btnCancelFetch" style="display:none;" data-i18n="menu.cancelFetch">[ CANCEL_FETCH ]</span>
     <span class="fake-menu-item theme-toggle" id="themeToggle" data-i18n="menu.modeNight">[ MODE: NIGHT ]</span>
+    <span class="fake-menu-item" id="btnCheckUpdate" data-i18n="menu.checkUpdate">[ CHECK_UPDATE ]</span>
     <div class="window-controls">
         <button class="win-btn" id="minBtn">_</button>
         <button class="win-btn" id="maxBtn">□</button>
@@ -455,6 +456,33 @@
         background: rgba(72, 32, 32, 0.94);
         color: #ffd6d6;
         border-color: rgba(255, 120, 120, 0.14);
+    }
+
+    /* 带行动按钮时改用横向布局，文案与按钮分列两端 */
+    .app-snackbar:has(.app-snackbar__action) {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        max-width: 680px;
+    }
+
+    .app-snackbar__action {
+        flex-shrink: 0;
+        padding: 5px 14px;
+        font-family: 'Consolas', sans-serif;
+        font-size: 12px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        color: var(--ef-black);
+        background: var(--ef-yellow);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: filter 0.2s ease;
+    }
+
+    .app-snackbar__action:hover {
+        filter: brightness(1.15);
     }
 
     @keyframes app-snackbar-in {

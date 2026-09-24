@@ -1,7 +1,9 @@
 import {
   WindowClose, WindowMinSize, WindowToggleMaxSize,
   OpenDataFolder, ReloadFrontend, ExportData, ExportDataDirect, CancelCurrentOperation,
+  CheckUpdate,
 } from "../wailsjs/go/main/App";
+import { BrowserOpenURL } from "../wailsjs/runtime/runtime";
 
 import {
   setCachedHgToken, setCurrentUid, setCurrentServerType, setGlobalCharData, setGlobalWeaponData,
@@ -10,7 +12,7 @@ import {
   setTempExportData,
 } from './state.js';
 
-import { APP_ELEMENT_IDS, SNACKBAR_AUTO_CLOSE } from './constants.js';
+import { APP_ELEMENT_IDS, SNACKBAR_AUTO_CLOSE, UPDATE_CHECK_DELAY, UPDATE_SNACKBAR_DELAY } from './constants.js';
 import { switchType, rerenderStatsCharts } from './render/main.js';
 import { changePage, resetFilters } from './render/history.js';
 import { updateOrCreateChart } from './render/chart.js';
@@ -381,4 +383,40 @@ window.addEventListener('DOMContentLoaded', async () => {
       );
     }
   });
+
+  // 版本更新检测：延迟执行，避免与启动时的数据加载争资源
+  setTimeout(() => checkAppUpdate({ silent: true }), UPDATE_CHECK_DELAY);
+
+  document.getElementById('btnCheckUpdate')?.addEventListener('click', () => checkAppUpdate({ silent: false }));
 });
+
+// 检测新版本并提示。silent 为真时不反馈「已是最新」与失败，用于启动时的自动检测
+async function checkAppUpdate({ silent }) {
+  try {
+    const info = await CheckUpdate();
+    if (!info?.latestVersion) {
+      if (!silent) showAppSnackbar({ message: t('update.checkFailed'), type: "warning", closeable: true });
+      return;
+    }
+    if (info.hasUpdate) {
+      showAppSnackbar({
+        message: t('update.available', { latest: info.latestVersion }),
+        type: "info",
+        autoCloseDelay: UPDATE_SNACKBAR_DELAY,
+        closeable: true,
+        action: {
+          label: t('update.gotoDownload'),
+          onClick: () => BrowserOpenURL(info.releaseUrl),
+        },
+      });
+    } else if (!silent) {
+      showAppSnackbar({
+        message: t('update.upToDate', { current: info.currentVersion }),
+        type: "success",
+      });
+    }
+  } catch (err) {
+    console.warn("Update check failed:", err);
+    if (!silent) showAppSnackbar({ message: t('update.checkFailed'), type: "warning", closeable: true });
+  }
+}

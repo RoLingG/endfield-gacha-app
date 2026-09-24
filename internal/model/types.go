@@ -182,3 +182,11 @@ type PoolConfigList struct {
 	WeaponPools []PoolConfig `json:"weaponPools"`
 	LastUpdate  string       `json:"lastUpdate"`
 }
+
+// UpdateInfo 版本更新检测结果
+type UpdateInfo struct {
+	CurrentVersion string `json:"currentVersion"`
+	LatestVersion  string `json:"latestVersion"`
+	ReleaseURL     string `json:"releaseUrl"`
+	HasUpdate      bool   `json:"hasUpdate"`
+}
