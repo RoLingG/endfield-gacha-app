@@ -293,39 +293,70 @@ export function destroyStatsCharts() {
 // 累计出货曲线（ALL 汇总用）：横轴累计抽数，纵轴累计 6★ 数
 // 实际曲线 vs 理论期望曲线（按官方概率模型逐抽累加，非线性），
 // 实际在期望上方即为偏欧
-export function renderCumulativeChart(data, isWeapon = false) {
-  if (!data || !data.points || data.points.length < 2) return;
+// 角色池累计出货曲线：限定池（main 链）与复刻池（rerun_char 链）各一条，共用一条期望线
+// 两条链的水位互不继承，各自从 (0,0) 起，横轴分别为各自的累计水位
+export function renderCumulativeChart(data) {
+  const mainPoints = data?.main || [];
+  const rerunPoints = data?.rerun || [];
+  const hasRerun = rerunPoints.length > 1;
+  const hasMain = mainPoints.length > 1;
+
+  // 两条链都无出货点时销毁旧实例，否则会残留上一批数据的曲线
+  if (!hasMain && !hasRerun) {
+    const stale = getCumulativeChartInstance();
+    if (stale) {
+      stale.destroy();
+      setCumulativeChartInstance(null);
+    }
+    return;
+  }
+
+  // 先确定最终的 x 轴，再让各组数据都按它生成，避免各数组长度不一致。
+  // 末次出货后仍有未垫刀时，x 轴向右多延一格用于展示当前垫刀
+  const mainTail = data.mainTail || 0;
+  const rerunTail = data.rerunTail || 0;
+  const mainLast = mainPoints[mainPoints.length - 1];
+  const rerunLast = rerunPoints[rerunPoints.length - 1];
+  const mainEnd = hasMain ? mainLast.pull + mainTail : 0;
+  const rerunEnd = hasRerun ? rerunLast.pull + rerunTail : 0;
+  const axisMax = Math.max(mainEnd, rerunEnd);
+  const axis = Array.from({ length: axisMax + 1 }, (_, i) => i);
+
+  const expectMap = new Map(calculateExpectedCurve(axisMax, false).map(e => [e.pull, e.expect]));
+  const expected = axis.map(pull => expectMap.get(pull) ?? expectMap.get(axisMax) ?? 0);
+
+  // 各链映射到统一的 x 轴上：出货点按原位置，垫刀段仅在终点补一个值形成水平延伸
+  // 中间不补点，否则末端会因密集的点标记显示为一串圆点
+  const toSeries = (points, tail) => {
+    if (points.length < 2) return axis.map(() => null);
+    const byPull = new Map(points.map(p => [p.pull, p.six]));
+    const lastPull = points[points.length - 1].pull;
+    const lastSix = points[points.length - 1].six;
+    return axis.map(pull => {
+      if (byPull.has(pull)) return byPull.get(pull);
+      if (tail > 0 && pull === lastPull + tail) return lastSix;
+      return null;
+    });
+  };
+
+  const mainSeries = toSeries(mainPoints, mainTail);
+  const rerunSeries = toSeries(rerunPoints, rerunTail);
 
   const existing = getCumulativeChartInstance();
 
-  // 先确定最终的 x 轴，再让三组数据都按它生成，避免各数组长度不一致。
-  // 末次出货后仍有未出货抽数时，x 轴向右多延一格用于展示当前垫刀
-  const hasTail = data.tailPulls > 0;
-  const axis = data.points.map(p => p.pull);
-  if (hasTail) axis.push(data.totalPulls + data.tailPulls);
-  const lastIdx = axis.length - 1;
+  // 图表类型不符（如从武器池申领曲线切来）则销毁重建，避免沿用对方的数据集结构
+  if (existing && existing.$chartKind !== 'charCumulative') {
+    existing.destroy();
+    setCumulativeChartInstance(null);
+  }
 
-  const expectMax = axis[lastIdx];
-  const expectMap = new Map(calculateExpectedCurve(expectMax, isWeapon).map(e => [e.pull, e.expect]));
-
-  // 实际曲线：出货点按原位置，垫刀段只保留末值以形成水平延伸
-  const actual = axis.map((pull, i) => {
-    if (i < data.points.length) return data.points[i].six;
-    return null;
-  });
-  const expected = axis.map(pull => expectMap.get(pull) ?? expectMap.get(expectMax) ?? 0);
-  // 垫刀段：与实线末端同值，构成水平虚线；末端之外的索引为 null 不绘制
-  const lastSix = data.points[data.points.length - 1].six;
-  const tail = hasTail
-    ? axis.map((_, i) => (i >= data.points.length - 1 ? lastSix : null))
-    : axis.map(() => null);
-
-  if (existing) {
-    existing.data.labels = axis;
-    existing.data.datasets[0].data = actual;
-    existing.data.datasets[1].data = expected;
-    existing.data.datasets[2].data = tail;
-    existing.update();
+  const reuse = getCumulativeChartInstance();
+  if (reuse) {
+    reuse.data.labels = axis;
+    reuse.data.datasets[0].data = mainSeries;
+    reuse.data.datasets[1].data = expected;
+    reuse.data.datasets[2].data = rerunSeries;
+    reuse.update();
     return;
   }
 
@@ -344,8 +375,8 @@ export function renderCumulativeChart(data, isWeapon = false) {
       labels: axis,
       datasets: [
         {
-          label: t('chart.labelCumulativeActual'),
-          data: actual,
+          label: t('chart.labelCumulativeMain'),
+          data: mainSeries,
           borderColor: '#ffca28',
           backgroundColor: 'rgba(255, 202, 40, 0.12)',
           borderWidth: 2,
@@ -353,7 +384,8 @@ export function renderCumulativeChart(data, isWeapon = false) {
           pointHoverRadius: 5,
           pointBackgroundColor: '#ffca28',
           tension: 0,
-          fill: true
+          fill: true,
+          spanGaps: true
         },
         {
           label: t('chart.labelCumulativeExpect'),
@@ -366,17 +398,17 @@ export function renderCumulativeChart(data, isWeapon = false) {
           fill: false
         },
         {
-          label: t('chart.labelCumulativeTail'),
-          data: tail,
-          borderColor: '#777',
-          borderWidth: 1.5,
-          borderDash: [4, 3],
-          pointRadius: 0,
-          pointHoverRadius: 4,
-          pointBackgroundColor: '#999',
+          label: t('chart.labelCumulativeRerun'),
+          data: rerunSeries,
+          borderColor: '#4fc3f7',
+          backgroundColor: 'rgba(79, 195, 247, 0.10)',
+          borderWidth: 2,
+          pointRadius: 2.5,
+          pointHoverRadius: 5,
+          pointBackgroundColor: '#4fc3f7',
           tension: 0,
-          fill: false,
-          spanGaps: false
+          fill: true,
+          spanGaps: true
         }
       ]
     },
@@ -394,11 +426,7 @@ export function renderCumulativeChart(data, isWeapon = false) {
         tooltip: {
           filter: item => item.parsed.y !== null,
           callbacks: {
-            title: items => {
-              const isTail = items[0].datasetIndex === 2;
-              const prefix = isTail ? t('chart.cumulativeTailAt') : t('chart.cumulativeAt');
-              return `${prefix} ${items[0].label} ${t('chart.pullsUnit')}`;
-            },
+            title: items => `${t('chart.cumulativeAt')} ${items[0].label} ${t('chart.pullsUnit')}`,
             label: ctx => `${ctx.dataset.label}: ${(+ctx.parsed.y).toFixed(2)}`
           }
         }
@@ -421,5 +449,123 @@ export function renderCumulativeChart(data, isWeapon = false) {
       }
     }
   });
+  newChart.$chartKind = 'charCumulative';
+  setCumulativeChartInstance(newChart);
+}
+
+// 限定武器池出货曲线：单条线，横轴为累计申领次数、纵轴为累计 6★ 数
+// 武器池按水位累加会因「不跨池继承 + 保底单位为申领」而与角色池尺度不可比，故单独成图
+// popover 显示该次申领所属卡池与本次出货数
+export function renderWeaponClaimChart(curve) {
+  const points = curve?.points;
+  if (!points || points.length < 2) {
+    const stale = getCumulativeChartInstance();
+    if (stale) {
+      stale.destroy();
+      setCumulativeChartInstance(null);
+    }
+    return;
+  }
+
+  const labels = points.map(p => p.claim);
+  const actual = points.map(p => p.six);
+  const poolNames = points.map(p => p.poolName);
+  const sixThisClaim = points.map(p => p.sixThisClaim);
+
+  // 图表类型不符（如从角色池累计曲线切来）则销毁重建
+  const existing = getCumulativeChartInstance();
+  if (existing && existing.$chartKind !== 'weaponClaim') {
+    existing.destroy();
+    setCumulativeChartInstance(null);
+  }
+
+  const reuse = getCumulativeChartInstance();
+  if (reuse) {
+    reuse.data.labels = labels;
+    reuse.data.datasets[0].data = actual;
+    reuse.$poolNames = poolNames;
+    reuse.$sixThisClaim = sixThisClaim;
+    reuse.update();
+    return;
+  }
+
+  const container = document.getElementById('cumulativeChartBody');
+  if (!container) return;
+  const oldCanvas = container.querySelector('canvas');
+  if (oldCanvas) oldCanvas.remove();
+
+  const canvas = document.createElement('canvas');
+  container.appendChild(canvas);
+
+  const grid = getStatsGridColor();
+  const newChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: t('chart.labelCumulativeActual'),
+          data: actual,
+          borderColor: '#ffca28',
+          backgroundColor: 'rgba(255, 202, 40, 0.12)',
+          borderWidth: 2,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#ffca28',
+          tension: 0,
+          fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 600, easing: 'easeOutQuart' },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { font: { family: 'Consolas', size: 11 }, boxWidth: 10, padding: 10 }
+        },
+        title: { display: false },
+        tooltip: {
+          callbacks: {
+            title: items => {
+              const i = items[0].dataIndex;
+              const pool = newChart.$poolNames?.[i];
+              if (!pool) return t('chart.claimStart');
+              return `${pool} · ${t('chart.claimNo')} ${items[0].label}`;
+            },
+            label: ctx => {
+              const i = ctx.dataIndex;
+              const thisSix = newChart.$sixThisClaim?.[i] ?? 0;
+              const lines = [`${t('chart.labelCumulativeActual')}: ${ctx.parsed.y}`];
+              if (i > 0) lines.push(`${t('chart.claimThisSix')}: ${thisSix}`);
+              return lines;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'linear',
+          title: { display: true, text: t('chart.xAxisClaims'), font: { family: 'Consolas', size: 11 } },
+          border: { color: grid, display: true },
+          grid: { display: false },
+          ticks: { font: { family: 'Consolas', size: 11 }, stepSize: 1, maxTicksLimit: 20 }
+        },
+        y: {
+          title: { display: true, text: t('chart.yAxis6Count'), font: { family: 'Consolas', size: 11 } },
+          border: { color: grid, display: true },
+          grid: { color: grid },
+          beginAtZero: true,
+          ticks: { font: { family: 'Consolas', size: 11 }, stepSize: 1 }
+        }
+      }
+    }
+  });
+  newChart.$chartKind = 'weaponClaim';
+  newChart.$poolNames = poolNames;
+  newChart.$sixThisClaim = sixThisClaim;
   setCumulativeChartInstance(newChart);
 }

@@ -14,6 +14,9 @@ export const WEAPON_QUOTA_5STAR = 200;      // 角色池 5★ → 200 武库配�
 export const WEAPON_QUOTA_4STAR = 20;       // 角色池 4★ → 20 武库配额
 export const SPARK_TIER1 = 120;             // 垫刀第一阶段阈值
 export const SPARK_TIER2 = 240;             // 垫刀第二阶段阈值
+export const INTEL_BOOK_TIER = 60;          // 特许寻访的寻访情报书触发抽数
+export const RUSH_RECRUIT_TIERS = [30, 60, 90]; // 重构寻访的加急招募三档触发抽数
+export const RUSH_RECRUIT_MAX = 90;         // 加急招募仅生效 1 次，90 抽后无下一档
 
 // ---- 角色池概率模型（官方规则）----
 export const PITY_BOOST_START = 65;         // 概率提升起始抽数
@@ -66,7 +69,8 @@ export const FALLBACK_CHAR_POOL_CONFIG = {
   "逐罪者": "卡缪",
   "临渊望北": "诀",
   "晨星于此闪耀": "梨诺",
-  "冬猎": "提弗洛斯"
+  "冬猎": "提弗洛斯",
+  "绚丽异彩": "伊冯"
 };
 
 // Fallback 武器卡池配置（API 加载失败时使用）
@@ -86,11 +90,12 @@ export const FALLBACK_WEAPON_POOL_CONFIG = {
   "染赤申领": "镀红祝福",
   "军列申领": "四二式·肃阵",
   "明曜申领": "曜夜的首演",
-  "幽寒申领": "寒夜幽影"
+  "幽寒申领": "寒夜幽影",
+  "点绘申领": "艺术暴君"
 };
 
 export const FALLBACK_POOL_ORDER = [
   "熔火灼痕", "轻飘飘的信使", "热烈色彩", "河流的女儿",
   "狼珀", "春雷动，万物生", "拳出无悔", "逐罪者", "临渊望北",
-    "晨星于此闪耀", "冬猎"
+    "晨星于此闪耀", "冬猎", "绚丽异彩"
 ];

@@ -7,8 +7,8 @@ import {
   getGlobalPoolConfig, getComingFromStats, setComingFromStats,
 } from '../state.js';
 import { createPoolButtons } from '../pool.js';
-import { mergeAllPoolsData, calculateAvgPity, calculateMaxDrought, calculateMonthlyStats, calculatePityDistribution, calculateLuckLevel, calculateUpLevel, calculateUpCount, calculateCumulativeCurve } from '../data.js';
-import { updateOrCreateChart, renderPityDistributionChart, renderMonthlyTrendChart, renderCumulativeChart, destroyStatsCharts } from './chart.js';
+import { mergeAllPoolsData, calculateAvgPity, calculateMaxDrought, calculateMonthlyStats, calculatePityDistribution, calculateLuckLevel, calculateUpLevel, calculateUpStats, calculateCumulativeCurve, calculateWeaponClaimCurves } from '../data.js';
+import { updateOrCreateChart, renderPityDistributionChart, renderMonthlyTrendChart, renderCumulativeChart, renderWeaponClaimChart, destroyStatsCharts } from './chart.js';
 import { createSummaryStrip, createAllPoolsSummaryStrip } from './summary.js';
 import { createRareRecordCard, createAllPoolsRareRecordsCard } from './rare.js';
 import { setPoolSelectorVisibility, updateSummaryStripVisibility, clearDisplay } from '../utils.js';
@@ -305,11 +305,14 @@ function renderStatsContent(items, isAllPools) {
   const avg = calculateAvgPity(items);
   const drought = calculateMaxDrought(items);
   // 口径说明，解释数字与原始记录条数不一致的原因
+  // 欧非评级有两套口径：出货速度用水位序列，UP 命中率用水位无关的结果比例
   const avgInfo = {
     head: t('stats.avgPityInfoHead'),
     rows: [
       [t('stats.infoRuleFree'), t('stats.infoRuleFreeVal')],
       [t('stats.infoRuleExcluded'), t('stats.infoRuleExcludedVal')],
+      [t('stats.infoRuleUpFree'), t('stats.infoRuleUpFreeVal')],
+      [t('stats.infoRuleUpNone'), t('stats.infoRuleUpNoneVal')],
     ],
     desc: t('stats.avgPityInfoDesc'),
   };
@@ -325,8 +328,9 @@ function renderStatsContent(items, isAllPools) {
     let avgSub = t('stats.total6Star', { count: avg.sixStarCount });
     if (isAllPools) {
       const speedKey = calculateLuckLevel(avg.avgPity, avg.sixStarCount, isWeapon);
-      const upCount = calculateUpCount(items, poolConfig);
-      const upKey = calculateUpLevel(upCount, avg.sixStarCount, isWeapon);
+      // UP 命中率用专用口径（额外排除无 UP 配置的池），与出货速度的样本口径不同
+      const upStats = calculateUpStats(items, poolConfig);
+      const upKey = calculateUpLevel(upStats.upCount, upStats.sixStarCount, isWeapon);
       const tags = [];
       if (speedKey) tags.push(`${t('stats.luckSpeedPrefix')} ${t(speedKey)}`);
       if (upKey) tags.push(`${t('stats.luckUpPrefix')} ${t(upKey)}`);
@@ -353,11 +357,16 @@ function renderStatsContent(items, isAllPools) {
   }
 
   // 累计出货曲线（汇总模式才显示）
+  // 角色池按水位累加并与理论期望线对比；武器池因不跨池继承、保底单位为申领，
+  // 改用申领次数曲线，两者尺度不可比故分图
   const cumulativeContainer = document.getElementById('cumulativeChartContainer');
   if (isAllPools) {
-    const curve = calculateCumulativeCurve(items);
     if (cumulativeContainer) cumulativeContainer.style.display = '';
-    renderCumulativeChart(curve, isWeapon);
+    if (isWeapon) {
+      renderWeaponClaimChart(calculateWeaponClaimCurves(items));
+    } else {
+      renderCumulativeChart(calculateCumulativeCurve(items));
+    }
   } else {
     if (cumulativeContainer) cumulativeContainer.style.display = 'none';
   }

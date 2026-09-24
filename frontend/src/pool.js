@@ -43,10 +43,22 @@ export async function loadPoolConfig() {
       setGlobalPoolConfig(poolConfig);
       setGlobalCharPoolOrder(charPoolOrder);
       setGlobalWeaponPoolOrder(weaponPoolOrder);
+    } else {
+      // 接口正常返回但配置为空：不落入 catch，需在此显式兜底
+      // 否则全局 config 保持 null，所有 UP 判定会静默失效（歪率显示 100%）
+      console.warn("Pool config is empty, using fallback");
+      setGlobalPoolConfig({ ...FALLBACK_CHAR_POOL_CONFIG, ...FALLBACK_WEAPON_POOL_CONFIG });
+      setGlobalCharPoolOrder([...FALLBACK_POOL_ORDER]);
+      setGlobalWeaponPoolOrder([]);
+      showAppSnackbar({
+        message: t('snackbar.emptyPools'),
+        type: "warning",
+        autoCloseDelay: SNACKBAR_AUTO_CLOSE,
+      });
     }
   } catch (err) {
     console.warn("Failed to load pool config, using fallback:", err);
-    setGlobalPoolConfig({ ...FALLBACK_CHAR_POOL_CONFIG });
+    setGlobalPoolConfig({ ...FALLBACK_CHAR_POOL_CONFIG, ...FALLBACK_WEAPON_POOL_CONFIG });
     setGlobalCharPoolOrder([...FALLBACK_POOL_ORDER]);
     setGlobalWeaponPoolOrder([]);
   }

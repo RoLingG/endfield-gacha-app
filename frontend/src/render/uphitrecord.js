@@ -24,7 +24,7 @@ export function renderUpHitRecordTable(items) {
 
   const cols = [
     { key: 'upName',   label: t('stats.upTarget'),  align: 'left' },
-    { key: 'pools',    label: t('stats.upPools'),   align: 'left', noSort: true },
+    { key: 'poolName', label: t('stats.upPools'),   align: 'left' },
     { key: 'pulls',    label: t('stats.upPulls'),   align: 'center' },
     { key: 'sixStarCount', label: '6★',             align: 'center' },
     { key: 'rate',     label: t('stats.upRate'),    align: 'center' },
@@ -34,9 +34,8 @@ export function renderUpHitRecordTable(items) {
   ];
 
   const sorted = [...records].sort((a, b) => {
-    let va = a[sortKey];
-    let vb = b[sortKey];
-    if (sortKey === 'pools') { va = a.pools.size; vb = b.pools.size; }
+    const va = a[sortKey];
+    const vb = b[sortKey];
     const cmp = (typeof va === 'number') ? va - vb : String(va).localeCompare(String(vb));
     return sortAsc ? cmp : -cmp;
   });
@@ -62,10 +61,9 @@ export function renderUpHitRecordTable(items) {
     const deepestCls = (rec.deepest === deepestMax && deepestMax > 0) ? ' up-hit-record-table__deepest-max' : '';
     const cell = (c, content, extraCls = '', title = '') =>
       `<td class="${extraCls}" style="text-align:${alignOf(c)}"${title ? ` title="${title}"` : ''}>${content}</td>`;
-    const poolsText = [...rec.pools].join(' / ');
     return `<tr>
       ${cell(cols[0], rec.upName, 'up-hit-record-table__name')}
-      ${cell(cols[1], poolsText, 'up-hit-record-table__pools', poolsText)}
+      ${cell(cols[1], rec.poolName, 'up-hit-record-table__pools', rec.poolName)}
       ${cell(cols[2], rec.pulls)}
       ${cell(cols[3], rec.sixStarCount)}
       ${cell(cols[4], `${rec.rate}%`, rateCls.trim())}

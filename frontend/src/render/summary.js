@@ -31,8 +31,8 @@ export function createSummaryStrip(dataMap, poolName) {
   const targetUp = poolUpConfig[poolName] || null;
   if (!isWeapon && targetUp) {
     centerLabel = t('summary.poolSpark');
-    const spark = calculateSparkInfo(reversed, targetUp);
-    rightCornerSub = spark.rightCornerSub;
+    const spark = calculateSparkInfo(reversed, targetUp, poolId);
+    rightCornerSub = t(spark.subKey, spark.subParams);
     centerValueHtml = `${spark.sparkCount} <span style="font-size:12px;color:#666">/ ${spark.targetLimit}</span>`;
   }
 

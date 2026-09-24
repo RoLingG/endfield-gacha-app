@@ -30,6 +30,13 @@ const (
 // ErrPoolNotFound 官方死池清理判定，网络超时等临时错误不触发。
 var ErrPoolNotFound = errors.New("pool not found")
 
+// nonLimitedCharPools 不参与跨池继承的角色池，作为「限定池」的反向判定。
+// 限定池的 poolId 前缀由官方控制且会新增（special / joint / rerun 均已出现）
+var nonLimitedCharPools = map[string]bool{
+	"standard": true, // 基础寻访
+	"beginner": true, // 启程寻访
+}
+
 // gachaSession 通用上下文信息
 type gachaSession struct {
 	Token    string
@@ -138,6 +145,7 @@ func FetchCharDataAll(ctx context.Context, token, serverID, lang string, knownSe
 	poolTypes := []string{
 		"E_CharacterGachaPoolType_Special",
 		"E_CharacterGachaPoolType_Joint",
+		"E_CharacterGachaPoolType_Rerun",
 		"E_CharacterGachaPoolType_Standard",
 		"E_CharacterGachaPoolType_Beginner",
 	}
@@ -175,12 +183,12 @@ func FetchCharDataAll(ctx context.Context, token, serverID, lang string, knownSe
 		return nil, fmt.Errorf("未获取到任何角色数据")
 	}
 
-	// 提取所有限定池的 pool_id 并保存
 	poolIDSet := make(map[string]struct{})
 	for _, item := range allData {
-		if len(item.PoolID) >= 7 && item.PoolID[:7] == "special" {
-			poolIDSet[item.PoolID] = struct{}{}
+		if nonLimitedCharPools[item.PoolID] {
+			continue
 		}
+		poolIDSet[item.PoolID] = struct{}{}
 	}
 	poolIDs := make([]string, 0, len(poolIDSet))
 	for id := range poolIDSet {

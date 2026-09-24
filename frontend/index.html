@@ -171,7 +171,7 @@
                             <div class="cc-info-pop__row"><span data-i18n="stats.infoRuleFree">免费抽</span><b data-i18n="stats.infoRuleFreeVal">不计入</b></div>
                             <div class="cc-info-pop__row"><span data-i18n="stats.infoRuleExcluded">基础/启程寻访</span><b data-i18n="stats.infoRuleExcludedVal">不计入</b></div>
                             <div class="cc-info-pop__sep"></div>
-                            <div class="cc-info-pop__desc" data-i18n="stats.pityDistInfoDesc"></div>
+                            <div class="cc-info-pop__desc" data-i18n-html="stats.pityDistInfoDesc"></div>
                         </div>
                     </span>
                 </div>
@@ -184,10 +184,10 @@
                         <span class="cc-info-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="7.2" y="3.6" width="1.6" height="5.6" rx="0.8"/><circle cx="8" cy="11.8" r="1"/></svg></span>
                         <div class="cc-info-pop">
                             <div class="cc-info-pop__head" data-i18n="stats.monthlyInfoHead">SCOPE // 统计口径</div>
-                            <div class="cc-info-pop__row"><span data-i18n="stats.infoRuleFree">免费抽</span><b data-i18n="stats.infoRuleFreeVal">不计入</b></div>
+                            <div class="cc-info-pop__row"><span data-i18n="stats.infoRuleUpFree">免费抽（UP 命中率）</span><b data-i18n="stats.infoRuleUpFreeVal">计入</b></div>
                             <div class="cc-info-pop__row"><span data-i18n="stats.infoRuleExcluded">基础/启程寻访</span><b data-i18n="stats.infoRuleExcludedVal">不计入</b></div>
                             <div class="cc-info-pop__sep"></div>
-                            <div class="cc-info-pop__desc" data-i18n="stats.monthlyInfoDesc"></div>
+                            <div class="cc-info-pop__desc" data-i18n-html="stats.monthlyInfoDesc"></div>
                         </div>
                     </span>
                 </div>
@@ -217,7 +217,20 @@
         </div>
         <div class="stats-charts">
             <div class="stats-chart-box" id="upHitRecordContainer" style="display:none;">
-                <div class="stats-chart-title" data-i18n="stats.upHitRecord">[ UP HIT RECORDS // UP命中记录 ]</div>
+                <div class="stats-chart-title">
+                    <span data-i18n="stats.upHitRecord">[ UP HIT RECORDS // UP命中记录 ]</span>
+                    <span class="cc-info">
+                        <span class="cc-info-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="7.2" y="3.6" width="1.6" height="5.6" rx="0.8"/><circle cx="8" cy="11.8" r="1"/></svg></span>
+                        <div class="cc-info-pop">
+                            <div class="cc-info-pop__head" data-i18n="stats.upHitRecordInfoHead">SCOPE // UP命中记录的统计口径</div>
+                            <div class="cc-info-pop__row"><span data-i18n="stats.infoRuleFree">免费抽</span><b data-i18n="stats.infoRuleFreeVal">不计入</b></div>
+                            <div class="cc-info-pop__row"><span data-i18n="stats.infoRuleExcluded">基础/启程寻访</span><b data-i18n="stats.infoRuleExcludedVal">不计入</b></div>
+                            <div class="cc-info-pop__row"><span data-i18n="stats.infoRuleUpNone">无 UP 配置的池</span><b data-i18n="stats.infoRuleUpNoneVal">不计入</b></div>
+                            <div class="cc-info-pop__sep"></div>
+                            <div class="cc-info-pop__desc" data-i18n-html="stats.upHitRecordInfoDesc"></div>
+                        </div>
+                    </span>
+                </div>
                 <div class="stats-chart-body" id="upHitRecordBody"></div>
             </div>
             <div class="stats-chart-box" id="poolProfileContainer" style="display:none;">
@@ -1247,7 +1260,7 @@
         width: 90%;
         margin-bottom: 20px;
         position: relative;
-        z-index: 10;
+        z-index: 40;
     }
 
     .pool-select-container {

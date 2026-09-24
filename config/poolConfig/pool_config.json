@@ -75,7 +75,6 @@
       "poolName": "辉光庆典",
       "poolType": "joint",
       "up6Name": "",
-      "up6CharId": "",
       "gachaType": "char",
       "lastUpdate": "2026-05-14 23:00:14"
     },
@@ -123,6 +122,15 @@
       "up6CharId": "chr_0034_typhoea",
       "gachaType": "char",
       "lastUpdate": "2026-09-04 11:35:17"
+    },
+    {
+      "poolId": "rerun_chr_yvonne",
+      "poolName": "绚丽异彩",
+      "poolType": "rerun",
+      "up6Name": "伊冯",
+      "up6CharId": "chr_0017_yvonne",
+      "gachaType": "char",
+      "lastUpdate": "2026-09-24 15:09:50"
     }
   ],
   "weaponPools": [
@@ -269,7 +277,16 @@
       "up6WeaponId": "wpn_funnel_0019",
       "gachaType": "weapon",
       "lastUpdate": "2026-09-04 11:35:17"
+    },
+    {
+      "poolId": "rerun_wpn_yvonne",
+      "poolName": "点绘申领",
+      "poolType": "rerun",
+      "up6Name": "艺术暴君",
+      "up6WeaponId": "wpn_pistol_0010",
+      "gachaType": "weapon",
+      "lastUpdate": "2026-09-24 14:55:28"
     }
   ],
-  "lastUpdate": "2026-09-07 20:15:02"
+  "lastUpdate": "2026-09-24 15:09:50"
 }
