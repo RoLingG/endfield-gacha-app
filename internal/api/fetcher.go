@@ -20,6 +20,7 @@ import (
 
 const (
 	BaseUrlChar        = "https://ef-webview.hypergryph.com/api/record/char"
+	BaseUrlCharMeta    = "https://ef-webview.hypergryph.com/api/record/char/meta"
 	BaseUrlWeapon      = "https://ef-webview.hypergryph.com/api/record/weapon"
 	BaseUrlWeaponPool  = "https://ef-webview.hypergryph.com/api/record/weapon/pool"
 	BaseUrlPoolContent = "https://ef-webview.hypergryph.com/api/content"
@@ -128,7 +129,7 @@ func fetchPaginated[T model.GachaItem](ctx context.Context, req paginationReques
 		if !hasMore || len(items) == 0 {
 			break
 		}
-		time.Sleep(100 * time.Millisecond) // 分页间隔，避免频繁请求
+		time.Sleep(200 * time.Millisecond) // 分页间隔，避免频繁请求
 		seqID = next
 	}
 	return list, nil
@@ -142,13 +143,7 @@ func FetchCharDataAll(ctx context.Context, token, serverID, lang string, knownSe
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	session := &gachaSession{Token: token, ServerID: serverID, Lang: lang}
-	poolTypes := []string{
-		"E_CharacterGachaPoolType_Special",
-		"E_CharacterGachaPoolType_Joint",
-		"E_CharacterGachaPoolType_Rerun",
-		"E_CharacterGachaPoolType_Standard",
-		"E_CharacterGachaPoolType_Beginner",
-	}
+	poolTypes := fetchCharPoolTypes(ctx, session)
 	type result struct {
 		data []model.EndFieldCharInfo
 		err  error

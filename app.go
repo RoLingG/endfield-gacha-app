@@ -263,6 +263,7 @@ func (a *App) SyncDataByChoice(hgToken string, uid string, serverType string, fu
 func (a *App) internalFetchAndSave(token, serverID, lang string, uid string, serverType string, fullSync bool) (string, error) {
 	ctx := a.startCancellableOperation()
 	defer a.clearCancelFunc()
+
 	wailsRuntime.EventsEmit(a.ctx, "fetch-progress", "正在抓取角色数据...")
 	var charKnown map[string]struct{}
 	if !fullSync {
@@ -276,6 +277,7 @@ func (a *App) internalFetchAndSave(token, serverID, lang string, uid string, ser
 	if _, err := storage.MergeAndSaveData(charData, uid, serverType, model.PoolTypeChar); err != nil {
 		logger.Log.Warn("Character save warning", zap.Error(err))
 	}
+
 	wailsRuntime.EventsEmit(a.ctx, "fetch-progress", "正在抓取武器数据...")
 	var weaponKnown map[string]struct{}
 	if !fullSync {
@@ -289,6 +291,7 @@ func (a *App) internalFetchAndSave(token, serverID, lang string, uid string, ser
 	if _, err := storage.MergeAndSaveData(weaponData, uid, serverType, model.PoolTypeWeapon); err != nil {
 		logger.Log.Warn("Weapon save warning", zap.Error(err))
 	}
+
 	wailsRuntime.EventsEmit(a.ctx, "fetch-progress", "数据同步完成！")
 	return "success", nil
 }

@@ -144,6 +144,21 @@ type LocalArchive struct {
 	Servers   []string `json:"servers"`
 }
 
+// CharPoolMetaResponse 卡池类型接口响应（/api/record/char/meta）
+// 返回的是该玩家近期参与过的池类型，非官方全量清单
+type CharPoolMetaResponse struct {
+	Code int    `json:"code"`
+	Msg  string `json:"msg"`
+	Data struct {
+		Tabs []struct {
+			Key      string `json:"key"`
+			Label    string `json:"label"`
+			PoolType string `json:"poolType"`
+		} `json:"tabs"`
+		BeginnerPullCount int `json:"beginnerPullCount"`
+	} `json:"data"`
+}
+
 // PoolContentResponse 卡池详情接口响应
 type PoolContentResponse struct {
 	Code int    `json:"code"`

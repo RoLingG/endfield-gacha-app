@@ -1,0 +1,10 @@
+{
+  "charPoolTypes": [
+    "E_CharacterGachaPoolType_Special",
+    "E_CharacterGachaPoolType_Joint",
+    "E_CharacterGachaPoolType_Rerun",
+    "E_CharacterGachaPoolType_Standard",
+    "E_CharacterGachaPoolType_Beginner"
+  ],
+  "discoveredAt": "2026-09-25 13:18:44"
+}
