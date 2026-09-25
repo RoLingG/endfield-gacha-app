@@ -199,8 +199,18 @@ func LoadKnownSeqIDs[T model.GachaItem](uid, serverType, category string) map[st
 		return nil
 	}
 	set := make(map[string]struct{}, len(list))
+	skipped := 0
 	for _, item := range list {
+		// 缺必要字段的记录不纳入已知集合，使其在下次同步时被重新拉取
+		if item.IsStale() {
+			skipped++
+			continue
+		}
 		set[item.GetSeqID()] = struct{}{}
+	}
+	if skipped > 0 {
+		logger.Log.Info("Stale records excluded from incremental set",
+			zap.String("category", category), zap.Int("count", skipped))
 	}
 	return set
 }

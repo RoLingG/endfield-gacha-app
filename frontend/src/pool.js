@@ -12,6 +12,7 @@ import {
   getCurrentPool, setCurrentPool,
 } from './state.js';
 import { showAppSnackbar } from './utils.js';
+import { parsePoolKey, formatPoolLabel } from './data.js';
 import { t } from './i18n.js';
 
 // 追踪当前的 click-outside handler，避免重复绑定
@@ -140,13 +141,21 @@ export function createPoolButtons(dataMap, onPoolChange, type = 'char') {
   const dropdown = document.createElement('div');
   dropdown.className = 'pool-dropdown-wrapper';
 
-  // 按对应类型的 poolOrder 顺序过滤 dataMap 中存在的卡池
+  // 按对应类型的 poolOrder 顺序排列 dataMap 中存在的卡池。
+  // poolOrder 里是原始池名（不含 #期数），而 dataMap 的 key 对复刻池带期数后缀，
+  // 故先按原始池名分组，同名的各期相邻排列
   const poolOrder = (type === 'weapon') ? getGlobalWeaponPoolOrder() : getGlobalCharPoolOrder();
-  const pools = poolOrder.filter(poolName => poolName in dataMap);
-  Object.keys(dataMap).forEach(poolName => {
-    if (!pools.includes(poolName)) {
-      pools.push(poolName);
-    }
+  const dataKeys = Object.keys(dataMap);
+  const pools = [];
+  for (const orderName of poolOrder) {
+    const matched = dataKeys.filter(k => parsePoolKey(k).name === orderName);
+    // 期数升序，保证 #1 → #2 依次排列
+    matched.sort((a, b) => parsePoolKey(a).version - parsePoolKey(b).version);
+    pools.push(...matched);
+  }
+  // 再补上 poolOrder 中未列出的池（配置缺失或新池）
+  dataKeys.forEach(k => {
+    if (!pools.includes(k)) pools.push(k);
   });
   // 优先保留该类型下用户做过的已有选择；仅当它不在当前池列表时才回落到默认（最新池）
   const previousPool = getCurrentPool(type);
@@ -155,7 +164,7 @@ export function createPoolButtons(dataMap, onPoolChange, type = 'char') {
 
   const display = document.createElement('div');
   display.className = 'pool-display';
-  display.textContent = getCurrentPool();
+  display.textContent = formatPoolLabel(getCurrentPool());
   display.addEventListener('click', () => {
     setMenuOpen(!menu.classList.contains('show'));
   });
@@ -164,8 +173,7 @@ export function createPoolButtons(dataMap, onPoolChange, type = 'char') {
   const menu = document.createElement('div');
   menu.className = 'pool-menu';
 
-  // 菜单展开时提升 wrapper 层级以压住下方卡片，收起时恢复，
-  // 否则会与卡片内 popover 的层级互相冲突（见 index.html 的 .pool-selector-wrapper）
+  // 菜单展开时提升 wrapper 层级以压住下方卡片，收起时恢复，否则会与卡片内 popover 的层级互相冲突
   function setMenuOpen(open) {
     if (open) {
       poolSelectorWrapper.classList.add('pool-selector-wrapper--open');
@@ -175,22 +183,22 @@ export function createPoolButtons(dataMap, onPoolChange, type = 'char') {
     closePoolMenu(); // 由它在过渡结束后降层级
   }
 
-  pools.reverse().forEach((poolName) => {
+  pools.reverse().forEach((poolKey) => {
     const item = document.createElement('div');
     item.className = 'pool-menu-item';
-    item.textContent = poolName;
-    if (poolName === getCurrentPool(type)) {
+    item.textContent = formatPoolLabel(poolKey);
+    if (poolKey === getCurrentPool(type)) {
       item.classList.add('active');
     }
     item.addEventListener('click', () => {
-      display.textContent = poolName;
-      setCurrentPool(poolName, type);
+      display.textContent = formatPoolLabel(poolKey);
+      setCurrentPool(poolKey, type);
       document.querySelectorAll('.pool-menu-item').forEach(i => {
         i.classList.remove('active');
       });
       item.classList.add('active');
       setMenuOpen(false);
-      onPoolChange(dataMap, poolName);
+      onPoolChange(dataMap, poolKey);
     });
     menu.appendChild(item);
   });

@@ -1,4 +1,4 @@
-import { calculateSixStarDetails } from '../data.js';
+import { calculateSixStarDetails, formatPoolLabel } from '../data.js';
 import { getCurrentType, getGlobalPoolConfig } from '../state.js';
 import { t } from '../i18n.js';
 
@@ -36,7 +36,7 @@ function renderRareChipPop(item, isUpItem) {
   return `<span class="rare-chip-pop">` +
     `<span class="rare-chip-pop__head">// 6★ DETAIL</span>` +
     `<span class="rare-chip-pop__name">${item.name}</span>` +
-    `<span class="rare-chip-pop__row"><span>POOL</span><b>${item.poolName || "-"}</b></span>` +
+    `<span class="rare-chip-pop__row"><span>POOL</span><b>${item.poolName ? formatPoolLabel(item.poolName) : "-"}</b></span>` +
     `<span class="rare-chip-pop__row"><span>PITY</span><b>${item.pityText}</b></span>` +
     inheritedRow +
     `<span class="rare-chip-pop__row"><span>UP</span><b>${upText}</b></span>` +

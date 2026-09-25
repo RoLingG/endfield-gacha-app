@@ -2,6 +2,7 @@
 build/bin
 frontend/dist
 migrate.exe
+probe.exe
 cmd/sync_poolConfig
 
 # 依赖与构建缓存

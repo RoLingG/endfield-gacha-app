@@ -6,7 +6,7 @@ import {
   getFilterRarity, setFilterRarity,
   getFilterIsFree, setFilterIsFree,
 } from '../state.js';
-import { getItemName, isDraw } from '../data.js';
+import { getItemName, isDraw, makePoolKey, formatPoolLabel } from '../data.js';
 import { showAppSnackbar } from '../utils.js';
 import { t } from '../i18n.js';
 
@@ -307,7 +307,7 @@ export function renderHistoryPage(direction = null) {
   renderPagedHistoryTable({
     items: getCurrentHistoryData(),
     isAllPoolsMode: false,
-    getPoolLabel: () => getCurrentPoolNameForPagination(),
+    getPoolLabel: () => formatPoolLabel(getCurrentPoolNameForPagination()),
     emptyMessage: t('noData.history'),
     emptyColspan: 5,
     direction
@@ -336,7 +336,7 @@ export function renderAllPoolsHistoryPage(direction = null) {
   renderPagedHistoryTable({
     items: getCurrentHistoryData(),
     isAllPoolsMode: true,
-    getPoolLabel: (item) => item.poolName,
+    getPoolLabel: (item) => formatPoolLabel(makePoolKey(item.poolName, item.poolVersion)),
     emptyMessage: t('noData.history'),
     emptyColspan: 5,
     direction

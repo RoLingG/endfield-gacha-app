@@ -93,6 +93,7 @@ export namespace model {
 	    isNew: boolean;
 	    poolId: string;
 	    poolName: string;
+	    poolVersion?: number;
 	    rarity: number;
 	    seqId: string;
 	
@@ -111,6 +112,7 @@ export namespace model {
 	        this.isNew = source["isNew"];
 	        this.poolId = source["poolId"];
 	        this.poolName = source["poolName"];
+	        this.poolVersion = source["poolVersion"];
 	        this.rarity = source["rarity"];
 	        this.seqId = source["seqId"];
 	    }
@@ -118,6 +120,7 @@ export namespace model {
 	export class EndFieldWeaponInfo {
 	    poolId: string;
 	    poolName: string;
+	    poolVersion?: number;
 	    weaponId: string;
 	    weaponName: string;
 	    weaponType: string;
@@ -134,6 +137,7 @@ export namespace model {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.poolId = source["poolId"];
 	        this.poolName = source["poolName"];
+	        this.poolVersion = source["poolVersion"];
 	        this.weaponId = source["weaponId"];
 	        this.weaponName = source["weaponName"];
 	        this.weaponType = source["weaponType"];

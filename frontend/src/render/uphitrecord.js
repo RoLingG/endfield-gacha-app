@@ -1,4 +1,4 @@
-import { calculateUpHitRecords } from '../data.js';
+import { calculateUpHitRecords, formatPoolLabel } from '../data.js';
 import { getGlobalPoolConfig } from '../state.js';
 import { t } from '../i18n.js';
 
@@ -63,7 +63,7 @@ export function renderUpHitRecordTable(items) {
       `<td class="${extraCls}" style="text-align:${alignOf(c)}"${title ? ` title="${title}"` : ''}>${content}</td>`;
     return `<tr>
       ${cell(cols[0], rec.upName, 'up-hit-record-table__name')}
-      ${cell(cols[1], rec.poolName, 'up-hit-record-table__pools', rec.poolName)}
+      ${cell(cols[1], formatPoolLabel(rec.poolName), 'up-hit-record-table__pools', formatPoolLabel(rec.poolName))}
       ${cell(cols[2], rec.pulls)}
       ${cell(cols[3], rec.sixStarCount)}
       ${cell(cols[4], `${rec.rate}%`, rateCls.trim())}

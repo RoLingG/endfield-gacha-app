@@ -1,4 +1,4 @@
-import { calculatePoolProfile, calculateRarityStack } from '../data.js';
+import { calculatePoolProfile, calculateRarityStack, formatPoolLabel } from '../data.js';
 import { getGlobalCharPoolOrder, getGlobalWeaponPoolOrder, getLastDataType, getGlobalPoolConfig } from '../state.js';
 import { t } from '../i18n.js';
 import { PITY_BOOST_START } from '../constants.js';
@@ -63,7 +63,7 @@ export function renderPoolProfile(dataMap, currentPool = null) {
 
     return `<div class="pool-slice">
       <div class="ps-head">
-        <span class="ps-name">${p.poolName}</span>
+        <span class="ps-name">${formatPoolLabel(p.poolName)}</span>
         <span class="ps-meta">${t('stats.profileMeta', { total: p.total, deepest: p.deepest })}</span>
       </div>
       <div class="ps-stack">${rowsHtml}${tailRow}</div>
@@ -108,7 +108,7 @@ export function renderRarityStack(dataMap, currentPool = null) {
     const seg = (cls, pct, label) =>
       `<div class="spp-seg ${cls}" style="width:${pct}%">${pct >= 8 ? label : ''}</div>`;
     return `<div class="spp-row">
-      <span class="spp-name">${s.poolName}</span>
+      <span class="spp-name">${formatPoolLabel(s.poolName)}</span>
       <div class="spp-bar">
         ${seg('spp-6', p6, `6★ ${p6}%`)}
         ${seg('spp-5', p5, `5★ ${p5}%`)}

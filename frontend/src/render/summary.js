@@ -1,4 +1,4 @@
-import { calculatePoolStats, calculateSparkInfo, calculatePityBoost, calculatePerPoolPity, calculateOffRate } from '../data.js';
+import { calculatePoolStats, calculateSparkInfo, calculatePityBoost, calculatePerPoolPity, calculateOffRate, parsePoolKey } from '../data.js';
 import { getCurrentType, getLastDataType, getGlobalPoolConfig, getGlobalCharPoolOrder, getGlobalWeaponPoolOrder } from '../state.js';
 import { updateCurrencyDisplay } from '../utils.js';
 import { t } from '../i18n.js';
@@ -28,7 +28,8 @@ export function createSummaryStrip(dataMap, poolName) {
   let centerValueHtml = total;
   let rightCornerSub = isWeapon ? t('summary.guaranteeWeapon') : t('summary.guaranteeChar');
   let pityCount = isWeapon ? 40 : 80;
-  const targetUp = poolUpConfig[poolName] || null;
+  // 查 UP 配置需用原始池名 —— poolName 参数是分组 key，复刻池带 #期数后缀
+  const targetUp = poolUpConfig[parsePoolKey(poolName).name] || null;
   if (!isWeapon && targetUp) {
     centerLabel = t('summary.poolSpark');
     const spark = calculateSparkInfo(reversed, targetUp, poolId);

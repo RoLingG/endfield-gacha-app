@@ -1,5 +1,7 @@
 package model
 
+import "strings"
+
 const (
 	ServerOfficial = "official"
 	ServerBilibili = "bilibili"
@@ -11,25 +13,40 @@ type GachaItem interface {
 	GetSeqID() string
 	GetGachaTime() string
 	GetPoolName() string
+	GetPoolVersion() int
+	// IsStale 判断本地记录是否缺少必要字段。为 true 时该记录会被排除出增量早停集合，从而在下次同步时被重新拉取
+	IsStale() bool
+}
+
+// isRerunPool 判断是否为复刻池，其 poolId 前缀为 rerun_chr_ / rerun_wpn_
+func isRerunPool(poolID string) bool {
+	return strings.HasPrefix(poolID, "rerun_chr_") || strings.HasPrefix(poolID, "rerun_wpn_")
 }
 
 type EndFieldCharInfo struct {
-	Kind     string `json:"kind"`
-	NameText string `json:"nameText"`
-	CharID   string `json:"charId"`
-	CharName string `json:"charName"`
-	GachaTs  string `json:"gachaTs"`
-	IsFree   bool   `json:"isFree"`
-	IsNew    bool   `json:"isNew"`
-	PoolID   string `json:"poolId"`
-	PoolName string `json:"poolName"`
-	Rarity   int    `json:"rarity"`
-	SeqID    string `json:"seqId"`
+	Kind        string `json:"kind"`
+	NameText    string `json:"nameText"`
+	CharID      string `json:"charId"`
+	CharName    string `json:"charName"`
+	GachaTs     string `json:"gachaTs"`
+	IsFree      bool   `json:"isFree"`
+	IsNew       bool   `json:"isNew"`
+	PoolID      string `json:"poolId"`
+	PoolName    string `json:"poolName"`
+	PoolVersion int    `json:"poolVersion,omitempty"` // 池的期数，用于区分同名复刻池的不同期
+	Rarity      int    `json:"rarity"`
+	SeqID       string `json:"seqId"`
 }
 
 func (c EndFieldCharInfo) GetSeqID() string     { return c.SeqID }
 func (c EndFieldCharInfo) GetGachaTime() string { return c.GachaTs }
 func (c EndFieldCharInfo) GetPoolName() string  { return c.PoolName }
+func (c EndFieldCharInfo) GetPoolVersion() int  { return c.PoolVersion }
+
+// IsStale 复刻池的记录必须带期数，其余池本就无此字段
+func (c EndFieldCharInfo) IsStale() bool {
+	return isRerunPool(c.PoolID) && c.PoolVersion == 0
+}
 
 type EndFieldCharData struct {
 	List    []EndFieldCharInfo `json:"list"`
@@ -43,20 +60,27 @@ type EndFieldGachaResponse struct {
 }
 
 type EndFieldWeaponInfo struct {
-	PoolID     string `json:"poolId"`
-	PoolName   string `json:"poolName"`
-	WeaponID   string `json:"weaponId"`
-	WeaponName string `json:"weaponName"`
-	WeaponType string `json:"weaponType"`
-	Rarity     int    `json:"rarity"`
-	IsNew      bool   `json:"isNew"`
-	GachaTs    string `json:"gachaTs"`
-	SeqID      string `json:"seqId"`
+	PoolID      string `json:"poolId"`
+	PoolName    string `json:"poolName"`
+	PoolVersion int    `json:"poolVersion,omitempty"` // 池的期数，用于区分同名复刻池的不同期
+	WeaponID    string `json:"weaponId"`
+	WeaponName  string `json:"weaponName"`
+	WeaponType  string `json:"weaponType"`
+	Rarity      int    `json:"rarity"`
+	IsNew       bool   `json:"isNew"`
+	GachaTs     string `json:"gachaTs"`
+	SeqID       string `json:"seqId"`
 }
 
 func (w EndFieldWeaponInfo) GetSeqID() string     { return w.SeqID }
 func (w EndFieldWeaponInfo) GetGachaTime() string { return w.GachaTs }
 func (w EndFieldWeaponInfo) GetPoolName() string  { return w.PoolName }
+func (w EndFieldWeaponInfo) GetPoolVersion() int  { return w.PoolVersion }
+
+// IsStale 复刻池的记录必须带期数，其余池本就无此字段
+func (w EndFieldWeaponInfo) IsStale() bool {
+	return isRerunPool(w.PoolID) && w.PoolVersion == 0
+}
 
 type EndFieldWeaponData struct {
 	List    []EndFieldWeaponInfo `json:"list"`

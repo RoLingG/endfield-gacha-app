@@ -635,11 +635,16 @@ func (a *App) CheckUpdate() model.UpdateInfo {
 
 // ================= Data Grouping Helpers =================
 
-// groupByPoolName 将抽卡记录列表按卡池名分组
+// groupByPoolName 将抽卡记录列表按卡池分组
+// 复刻池同名但分多期（poolVersion），各期机制独立，故 key 追加 #期数以示区分，
+// 普通池无 poolVersion 则保持原名
 func groupByPoolName[T model.GachaItem](data []T) map[string][]T {
 	grouped := make(map[string][]T)
 	for _, item := range data {
 		key := item.GetPoolName()
+		if v := item.GetPoolVersion(); v > 0 {
+			key = fmt.Sprintf("%s#%d", key, v)
+		}
 		grouped[key] = append(grouped[key], item)
 	}
 	return grouped

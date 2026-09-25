@@ -20,11 +20,33 @@ export const DEFAULT_PITY_DISTRIBUTION = {
 };
 export const DEFAULT_ARRAY = [];
 
+// 复刻池按「池名#期数」作分组 key（如 绚丽异彩#1），普通池保持池名原样。
+// 显示时经 formatPoolLabel 转成「绚丽异彩 #1」，故此处只需还原出池名与期数
+export function makePoolKey(poolName, poolVersion) {
+  return poolVersion > 0 ? `${poolName}#${poolVersion}` : poolName;
+}
+
+// 把分组 key 转为展示用文案：复刻池转成「池名 #期数」，普通池原样返回
+export function formatPoolLabel(key) {
+  const parsed = parsePoolKey(key);
+  return parsed.version > 0 ? `${parsed.name} #${parsed.version}` : parsed.name;
+}
+
+// 从分组 key 还原池名与期数。无期数的普通池返回 { name: key, version: 0 }
+export function parsePoolKey(key) {
+  if (!key) return { name: "", version: 0 };
+  const idx = key.lastIndexOf("#");
+  if (idx < 0) return { name: key, version: 0 };
+  const version = Number(key.slice(idx + 1));
+  if (!Number.isInteger(version) || version <= 0) return { name: key, version: 0 };
+  return { name: key.slice(0, idx), version };
+}
+
 export function groupDataByPool(flatList) {
   const grouped = {};
   if (!flatList || flatList.length === 0) return grouped;
   flatList.forEach(item => {
-    const pool = item.poolName || "UNKNOWN";
+    const pool = makePoolKey(item.poolName, item.poolVersion) || "UNKNOWN";
     if (!grouped[pool]) {
       grouped[pool] = [];
     }
@@ -86,7 +108,7 @@ export function calculateSixStarDetails(items, reverse = false, allItems) {
             isNew: item.isNew,
             pityText: item.isFree ? "FREE" : ++poolPity
           };
-          if (item.poolName) detail.poolName = item.poolName;
+          if (item.poolName) detail.poolName = makePoolKey(item.poolName, item.poolVersion);
           details.push(detail);
           if (!item.isFree) poolPity = 0;
         } else {
@@ -110,7 +132,7 @@ export function calculateSixStarDetails(items, reverse = false, allItems) {
               isNew: item.isNew,
               pityText: item.isFree ? "FREE" : ++poolPity
             };
-            if (item.poolName) detail.poolName = item.poolName;
+            if (item.poolName) detail.poolName = makePoolKey(item.poolName, item.poolVersion);
             if (!item.isFree && firstSixStar && inheritedPity > 0) {
               detail.inheritedPity = inheritedPity;
             }
@@ -242,13 +264,18 @@ export function calculatePerPoolPity(dataMap, poolOrder) {
   const perPoolPity = {};
   const chainPity = getEmptyChainPity();
 
-  // 按配置顺序逐池遍历
-  const allPoolNames = [...poolOrder];
-  for (const poolName in dataMap) {
-    if (!allPoolNames.includes(poolName)) {
-      allPoolNames.push(poolName);
-    }
+  // 按配置顺序逐池遍历。poolOrder 里是原始池名，dataMap 的 key 对复刻池带 #期数后缀，
+  // 故按原始池名匹配，同名的各期按升序相邻排列
+  const dataKeys = Object.keys(dataMap);
+  const allPoolNames = [];
+  for (const orderName of poolOrder) {
+    const matched = dataKeys.filter(k => parsePoolKey(k).name === orderName);
+    matched.sort((a, b) => parsePoolKey(a).version - parsePoolKey(b).version);
+    allPoolNames.push(...matched);
   }
+  dataKeys.forEach(k => {
+    if (!allPoolNames.includes(k)) allPoolNames.push(k);
+  });
 
   for (const poolName of allPoolNames) {
     if (!dataMap[poolName]) continue;
@@ -344,20 +371,24 @@ export function mergeAllPoolsData(dataMap, type = 'char') {
   if (!dataMap || typeof dataMap !== 'object' || Object.keys(dataMap).length === 0) return DEFAULT_ARRAY;
 
   const poolOrder = (type === 'weapon') ? getGlobalWeaponPoolOrder() : getGlobalCharPoolOrder();
-  const poolOrderSet = new Set(poolOrder);
+  const dataKeys = Object.keys(dataMap);
   const merged = [];
-  // 新池→旧池遍历（反转配置顺序），保持池内顺序不变
+  // 新池→旧池遍历（反转配置顺序），保持池内顺序不变。
+  // poolOrder 里是原始池名，dataMap 的 key 对复刻池带 #期数后缀，故按原始池名匹配
+  const used = new Set();
   for (let i = poolOrder.length - 1; i >= 0; i--) {
-    if (dataMap[poolOrder[i]]) {
-      merged.push(...dataMap[poolOrder[i]]);
-    }
+    const matched = dataKeys.filter(k => parsePoolKey(k).name === poolOrder[i]);
+    // 期数升序，保证 #1 → #2 依次排列
+    matched.sort((a, b) => parsePoolKey(a).version - parsePoolKey(b).version);
+    matched.forEach(k => {
+      merged.push(...dataMap[k]);
+      used.add(k);
+    });
   }
   // 再把 dataMap 中有但 poolOrder 没有的池子加进去（保底）
-  for (const poolName in dataMap) {
-    if (!poolOrderSet.has(poolName)) {
-      merged.push(...dataMap[poolName]);
-    }
-  }
+  dataKeys.forEach(k => {
+    if (!used.has(k)) merged.push(...dataMap[k]);
+  });
   return merged;
 }
 
@@ -554,10 +585,18 @@ export function calculatePoolProfile(dataMap, poolOrder, poolConfig = {}) {
   const profiles = [];
   if (!dataMap || typeof dataMap !== 'object') return profiles;
 
-  const poolNames = [...poolOrder];
-  for (const poolName in dataMap) {
-    if (!poolNames.includes(poolName)) poolNames.push(poolName);
+  // poolOrder 里是原始池名，dataMap 的 key 对复刻池带 #期数后缀，故按原始池名匹配
+  const dataKeys = Object.keys(dataMap);
+  const poolNames = [];
+  const used = new Set();
+  for (const orderName of poolOrder) {
+    const matched = dataKeys.filter(k => parsePoolKey(k).name === orderName);
+    matched.sort((a, b) => parsePoolKey(a).version - parsePoolKey(b).version);
+    matched.forEach(k => { poolNames.push(k); used.add(k); });
   }
+  dataKeys.forEach(k => {
+    if (!used.has(k)) poolNames.push(k);
+  });
 
   for (const poolName of poolNames) {
     const items = dataMap[poolName];
@@ -568,7 +607,8 @@ export function calculatePoolProfile(dataMap, poolOrder, poolConfig = {}) {
     if (total === 0) continue;
 
     const sorted = drawItems.sort((a, b) => Number(a.gachaTs) - Number(b.gachaTs) || Number(a.seqId) - Number(b.seqId));
-    const upName = poolConfig[poolName];
+    // 查 UP 名需用原始池名 —— dataMap 的 key 对复刻池带 #期数后缀
+    const upName = poolConfig[parsePoolKey(poolName).name];
 
     let streak = 0;
     let deepest = 0;
@@ -602,10 +642,18 @@ export function calculateRarityStack(dataMap, poolOrder) {
   const stacks = [];
   if (!dataMap || typeof dataMap !== 'object') return stacks;
 
-  const poolNames = [...poolOrder];
-  for (const poolName in dataMap) {
-    if (!poolNames.includes(poolName)) poolNames.push(poolName);
+  // poolOrder 里是原始池名，dataMap 的 key 对复刻池带 #期数后缀，故按原始池名匹配
+  const dataKeys = Object.keys(dataMap);
+  const poolNames = [];
+  const used = new Set();
+  for (const orderName of poolOrder) {
+    const matched = dataKeys.filter(k => parsePoolKey(k).name === orderName);
+    matched.sort((a, b) => parsePoolKey(a).version - parsePoolKey(b).version);
+    matched.forEach(k => { poolNames.push(k); used.add(k); });
   }
+  dataKeys.forEach(k => {
+    if (!used.has(k)) poolNames.push(k);
+  });
 
   for (const poolName of poolNames) {
     const items = dataMap[poolName];
@@ -634,16 +682,18 @@ export function calculateUpHitRecords(items, poolConfig = {}) {
 
   // 水位（跨池继承口径）
   const recordMap = new Map();
-  // 出货前即建行，使抽数能从周期起点开始累计
-  const ensureRow = (poolName, upName) => {
-    if (!recordMap.has(poolName)) {
-      recordMap.set(poolName, {
-        poolName, upName, sixStarCount: 0, upCount: 0, offCount: 0,
+  // 出货前即建行，使抽数能从周期起点开始累计。
+  // 行按池分组 key 区分（复刻池各期独立成行），upName 仍取自原始池名的配置
+  const ensureRow = (poolKey, upName) => {
+    if (!recordMap.has(poolKey)) {
+      recordMap.set(poolKey, {
+        poolName: poolKey, upName, sixStarCount: 0, upCount: 0, offCount: 0,
         deepest: 0, pulls: 0, pitySum: 0
       });
     }
-    return recordMap.get(poolName);
+    return recordMap.get(poolKey);
   };
+  
 
   let lastPoolId = '';
   let currentUp = null;
@@ -658,7 +708,7 @@ export function calculateUpHitRecords(items, poolConfig = {}) {
     const key = getStatPityKey(item.poolId);
     chainStreak[key] = (chainStreak[key] || 0) + 1;
     streak = chainStreak[key];
-    if (currentUp) ensureRow(item.poolName, currentUp).pulls++;
+    if (currentUp) ensureRow(makePoolKey(item.poolName, item.poolVersion), currentUp).pulls++;
 
     if (item.rarity === 6) {
       const upName = poolConfig[item.poolName];
@@ -666,7 +716,7 @@ export function calculateUpHitRecords(items, poolConfig = {}) {
         chainStreak[key] = 0;
         continue; // 常驻池无 UP 配置，不参与命中记录表
       }
-      const rec = ensureRow(item.poolName, upName);
+      const rec = ensureRow(makePoolKey(item.poolName, item.poolVersion), upName);
       rec.sixStarCount++;
       rec.pitySum += streak;
       const isUp = getItemName(item) === upName;
