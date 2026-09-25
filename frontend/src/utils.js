@@ -68,6 +68,10 @@ export function setPoolSelectorVisibility(el, visible) {
     el.removeEventListener("transitionend", el._poolSelEnd);
     el._poolSelEnd = null;
   }
+  if (el._poolSelZEnd) {
+    el.removeEventListener("transitionend", el._poolSelZEnd);
+    el._poolSelZEnd = null;
+  }
 
   if (visible) {
     const h = el.scrollHeight;
@@ -102,6 +106,16 @@ export function setPoolSelectorVisibility(el, visible) {
     el.style.transition = "height .25s ease-in, opacity .20s ease-out, margin-bottom .25s ease-in";
     // 用 offsetHeight 作过渡初值：height 为空时 scrollHeight 不可靠
     el.style.height = el.offsetHeight + "px";
+    // 层级需等收起动画结束再回落，否则卡片 popover 会在收缩途中透出
+    el._poolSelZEnd = function handler(e) {
+      if (e.propertyName !== "height") return;
+      el.removeEventListener("transitionend", handler);
+      el._poolSelZEnd = null;
+      if (el.dataset.poolSelState === 'hidden') {
+        el.classList.remove('pool-selector-wrapper--open');
+      }
+    };
+    el.addEventListener("transitionend", el._poolSelZEnd);
     el._poolSelRaf = requestAnimationFrame(() => {
       el._poolSelRaf = null;
       el.style.height = "0px";

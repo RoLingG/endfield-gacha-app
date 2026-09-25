@@ -85,6 +85,22 @@ export async function updatePoolConfigHandler() {
   }
 }
 
+// 关闭当前展开的池子下拉菜单，并等过渡结束后回落 wrapper 层级
+// 供 Esc 等外部关闭路径复用，避免各处重复实现层级时序
+export function closePoolMenu() {
+  document.querySelectorAll('.pool-menu.show').forEach(menu => {
+    menu.classList.remove('show');
+    const wrapper = menu.closest('.pool-selector-wrapper');
+    if (!wrapper) return;
+    menu.addEventListener('transitionend', function handler(e) {
+      if (e.propertyName !== 'max-height') return;
+      if (!menu.classList.contains('show')) {
+        wrapper.classList.remove('pool-selector-wrapper--open');
+      }
+    }, { once: true });
+  });
+}
+
 export function createPoolButtons(dataMap, onPoolChange, type = 'char') {
   if (!dataMap || typeof dataMap !== 'object' || Object.keys(dataMap).length === 0) {
     showAppSnackbar({
@@ -104,6 +120,8 @@ export function createPoolButtons(dataMap, onPoolChange, type = 'char') {
     return;
   }
   poolSelectorWrapper.innerHTML = '';
+  // 重建时清掉上一轮的展开态层级，避免残留
+  poolSelectorWrapper.classList.remove('pool-selector-wrapper--open');
 
   // 移除上一次绑定的 click-outside handler，避免泄漏
   if (currentOutsideClickHandler) {
@@ -139,12 +157,23 @@ export function createPoolButtons(dataMap, onPoolChange, type = 'char') {
   display.className = 'pool-display';
   display.textContent = getCurrentPool();
   display.addEventListener('click', () => {
-    menu.classList.toggle('show');
+    setMenuOpen(!menu.classList.contains('show'));
   });
   dropdown.appendChild(display);
 
   const menu = document.createElement('div');
   menu.className = 'pool-menu';
+
+  // 菜单展开时提升 wrapper 层级以压住下方卡片，收起时恢复，
+  // 否则会与卡片内 popover 的层级互相冲突（见 index.html 的 .pool-selector-wrapper）
+  function setMenuOpen(open) {
+    if (open) {
+      poolSelectorWrapper.classList.add('pool-selector-wrapper--open');
+      menu.classList.add('show');
+      return;
+    }
+    closePoolMenu(); // 由它在过渡结束后降层级
+  }
 
   pools.reverse().forEach((poolName) => {
     const item = document.createElement('div');
@@ -160,7 +189,7 @@ export function createPoolButtons(dataMap, onPoolChange, type = 'char') {
         i.classList.remove('active');
       });
       item.classList.add('active');
-      menu.classList.remove('show');
+      setMenuOpen(false);
       onPoolChange(dataMap, poolName);
     });
     menu.appendChild(item);
@@ -173,7 +202,7 @@ export function createPoolButtons(dataMap, onPoolChange, type = 'char') {
   // 全局 currentOutsideClickHandler 绑定 click handler，方便处理重复绑定问题
   currentOutsideClickHandler = (e) => {
     if (!dropdown.contains(e.target)) {
-      menu.classList.remove('show');
+      setMenuOpen(false);
     }
   };
   document.addEventListener('click', currentOutsideClickHandler);

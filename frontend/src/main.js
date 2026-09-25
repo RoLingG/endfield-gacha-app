@@ -20,6 +20,7 @@ import { setChartUpdater, setStatsChartUpdater, initThemeToggle } from './theme.
 import { showAppSnackbar, setFetchingState } from './utils.js';
 import { showTokenInputUI, handleOfficialLoginWindow, handleToken, setDataLoader,} from './auth.js';
 import { loadLocale, applyToDOM, t } from './i18n.js';
+import { closePoolMenu } from './pool.js';
 import { loadLocal, handleImportTemp, initApp, setExitAnimator,} from './loader.js';
 
 // ============================================
@@ -376,11 +377,9 @@ window.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // Esc 关闭池子下拉菜单
+    // Esc 关闭池子下拉菜单（层级回落由 closePoolMenu 在过渡后处理）
     if (e.key === 'Escape') {
-      document.querySelectorAll('.pool-menu.show').forEach(m =>
-          m.classList.remove('show')
-      );
+      closePoolMenu();
     }
   });
 
