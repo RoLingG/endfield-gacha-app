@@ -1,6 +1,6 @@
 # Endfield Gacha App // 终末地寻访记录终端
 
-[![Go Version](https://img.shields.io/badge/Go-%3E%3D1.24-00ADD8.svg)](https://go.dev) ![Wails](https://img.shields.io/badge/Wails-2.0+-C70039.svg) [![Frontend](https://img.shields.io/badge/Frontend-JavaScript-F7DF1E.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript) [![Node](https://img.shields.io/badge/Node-%3E%3D24-green.svg)](LICENSE) [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) ![Release](https://img.shields.io/github/v/release/RoLingG/endfield-gacha-app?style=flat&color=orange) ![Last Commit](https://img.shields.io/github/last-commit/RoLingG/endfield-gacha-app?style=flat&color=purple)
+[![Go Version](https://img.shields.io/badge/Go-%3E%3D1.24-00ADD8.svg)](https://go.dev) ![Wails](https://img.shields.io/badge/Wails-%3E%3D2.12-C70039.svg) [![Frontend](https://img.shields.io/badge/Frontend-JavaScript-F7DF1E.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript) [![Node](https://img.shields.io/badge/Node-%3E%3D24-green.svg)](LICENSE) [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) ![Release](https://img.shields.io/github/v/release/RoLingG/endfield-gacha-app?style=flat&color=orange) ![Last Commit](https://img.shields.io/github/last-commit/RoLingG/endfield-gacha-app?style=flat&color=purple)
 
 一个极简、安全且具有沉浸式**终末地 (Endfield) 工业风格**的官服/B服抽卡记录分析工具。
 基于 Wails 构建，无需上传数据，完全本地处理数据，提供良好的数据可视化体验。
