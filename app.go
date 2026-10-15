@@ -93,7 +93,7 @@ func (a *App) WindowToggleMaxSize() bool {
 }
 
 func (a *App) WindowClose() {
-	wailsRuntime.Quit(a.ctx)
+	wailsRuntime.Hide(a.ctx)
 }
 
 // ================= File System Operations =================
@@ -668,7 +668,11 @@ var reloadIcon []byte
 var quitIcon []byte
 
 func (a *App) appSystray() {
-	systray.Run(a.onReady, a.onExit)
+	go func() {
+		runtimeOs.LockOSThread()
+		defer runtimeOs.UnlockOSThread()
+		systray.Run(a.onReady, a.onExit)
+	}()
 }
 
 func (a *App) onReady() {

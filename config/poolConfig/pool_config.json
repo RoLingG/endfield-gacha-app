@@ -131,6 +131,15 @@
       "up6CharId": "chr_0017_yvonne",
       "gachaType": "char",
       "lastUpdate": "2026-09-24 15:09:50"
+    },
+    {
+      "poolId": "special_1_6_1",
+      "poolName": "万物更新",
+      "poolType": "special",
+      "up6Name": "祀",
+      "up6CharId": "chr_0036_jsspsi",
+      "gachaType": "char",
+      "lastUpdate": "2026-10-15 16:48:51"
     }
   ],
   "weaponPools": [
@@ -286,7 +295,16 @@
       "up6WeaponId": "wpn_pistol_0010",
       "gachaType": "weapon",
       "lastUpdate": "2026-09-24 14:55:28"
+    },
+    {
+      "poolId": "weaponbox_1_6_1",
+      "poolName": "篆玉申领",
+      "poolType": "normal",
+      "up6Name": "玉中身",
+      "up6WeaponId": "wpn_claym_0018",
+      "gachaType": "weapon",
+      "lastUpdate": "2026-10-15 16:55:02"
     }
   ],
-  "lastUpdate": "2026-09-24 15:09:50"
+  "lastUpdate": "2026-10-15 16:55:02"
 }

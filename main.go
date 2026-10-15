@@ -3,6 +3,7 @@ package main
 import (
 	"Go_Arknights_Gacha_App/internal/logger"
 	"embed"
+
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
