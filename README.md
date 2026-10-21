@@ -5,19 +5,19 @@
 一个极简、安全且具有沉浸式**终末地 (Endfield) 工业风格**的官服/B服抽卡记录分析工具。
 基于 Wails 构建，无需上传数据，完全本地处理数据，提供良好的数据可视化体验。
 
-![Preview](https://rolingg.top/images/EndField/efaimgs1.png)
+![Preview](assets/efaimgs1.png)
 
-![Preview](https://rolingg.top/images/EndField/efaimgs2.png)
+![Preview](assets/efaimgs2.png)
 
-![Preview](https://rolingg.top/images/EndField/efaimgs3.png)
+![Preview](assets/efaimgs3.png)
 
-![Preview](https://rolingg.top/images/EndField/efaimgs4.png)
+![Preview](assets/efaimgs4.png)
 
-![Preview](https://rolingg.top/images/EndField/efaimgs5.png)
+![Preview](assets/efaimgs5.png)
 
-![Preview](https://rolingg.top/images/EndField/efaimgs6.png)
+![Preview](assets/efaimgs6.png)
 
-![Preview](https://rolingg.top/images/EndField/efaimgs7.png)
+![Preview](assets/efaimgs7.png)
 
 ## ✨ 特性 (Features)
 
