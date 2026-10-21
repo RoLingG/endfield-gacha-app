@@ -1,6 +1,6 @@
 module Go_Arknights_Gacha_App
 
-go 1.25.0
+go 1.27.3
 
 require (
 	github.com/energye/systray v1.0.2
@@ -48,5 +48,3 @@ require (
 	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/text v0.39.0 // indirect
 )
-
-// replace github.com/wailsapp/wails/v2 v2.10.2 => D:\GoLand\pkg\mod
