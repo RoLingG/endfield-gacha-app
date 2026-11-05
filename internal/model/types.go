@@ -194,7 +194,10 @@ type PoolContentResponse struct {
 			PoolType      string `json:"pool_type"`
 			Up6Name       string `json:"up6_name"`
 			Up6Image      string `json:"up6_image"`
-			All           []struct {
+			// LinkCharPoolName 武器池关联的角色池名称，武器池响应中才有值。
+			// 用于从角色池反推武器池 ID 时校验两者确实配对。
+			LinkCharPoolName string `json:"link_char_pool_name"`
+			All              []struct {
 				ID     string `json:"id"`
 				Name   string `json:"name"`
 				Rarity int    `json:"rarity"`

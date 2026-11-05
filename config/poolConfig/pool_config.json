@@ -140,6 +140,24 @@
       "up6CharId": "chr_0036_jsspsi",
       "gachaType": "char",
       "lastUpdate": "2026-10-15 16:48:51"
+    },
+    {
+      "poolId": "rerun_chr_tangtang",
+      "poolName": "祖泉的新流",
+      "poolType": "rerun",
+      "up6Name": "汤汤",
+      "up6CharId": "chr_0027_tangtang",
+      "gachaType": "char",
+      "lastUpdate": "2026-11-05 12:51:24"
+    },
+    {
+      "poolId": "special_1_6_2",
+      "poolName": "烟火邀星河",
+      "poolType": "special",
+      "up6Name": "明河",
+      "up6CharId": "chr_0037_minghe",
+      "gachaType": "char",
+      "lastUpdate": "2026-11-05 13:29:14"
     }
   ],
   "weaponPools": [
@@ -304,7 +322,25 @@
       "up6WeaponId": "wpn_claym_0018",
       "gachaType": "weapon",
       "lastUpdate": "2026-10-15 16:55:02"
+    },
+    {
+      "poolId": "rerun_wpn_tangtang",
+      "poolName": "细枝申领",
+      "poolType": "rerun",
+      "up6Name": "落草",
+      "up6WeaponId": "wpn_pistol_0011",
+      "gachaType": "weapon",
+      "lastUpdate": "2026-11-05 12:51:24"
+    },
+    {
+      "poolId": "weaponbox_1_6_2",
+      "poolName": "月映申领",
+      "poolType": "normal",
+      "up6Name": "唤月",
+      "up6WeaponId": "wpn_sword_0025",
+      "gachaType": "weapon",
+      "lastUpdate": "2026-11-05 13:29:14"
     }
   ],
-  "lastUpdate": "2026-10-15 16:55:02"
+  "lastUpdate": "2026-11-05 13:29:14"
 }

@@ -446,6 +446,62 @@ func (a *App) ImportTemporaryJson() (ImportResponse, error) {
 
 // ================= Pool Config Management =================
 
+// deriveWeaponPool 从角色池反推同期的武器池，命中时一并返回已拉取的介绍页
+func deriveWeaponPool(charPoolID, charPoolName, serverID, lang string) (string, *model.PoolContentResponse, bool) {
+	const specialPrefix = "special_"
+	if !strings.HasPrefix(charPoolID, specialPrefix) {
+		return "", nil, false
+	}
+
+	version := strings.TrimPrefix(charPoolID, specialPrefix)
+	if version == "" {
+		return "", nil, false
+	}
+
+	// 先试正确拼写，无响应再回退到官方历史上的错误拼写
+	for _, prefix := range []string{"weaponbox_", "weponbox_"} {
+		weaponPoolID := prefix + version
+		resp, err := api.FetchPoolContent(weaponPoolID, serverID, lang)
+		if err != nil {
+			logger.Log.Warn("Derived weapon pool not available",
+				zap.String("char_pool_id", charPoolID),
+				zap.String("derived_weapon_pool_id", weaponPoolID),
+				zap.Error(err))
+			continue
+		}
+		if resp.Data.Pool.LinkCharPoolName != charPoolName {
+			logger.Log.Warn("Derived weapon pool does not match char pool",
+				zap.String("char_pool_id", charPoolID),
+				zap.String("char_pool_name", charPoolName),
+				zap.String("derived_weapon_pool_id", weaponPoolID),
+				zap.String("link_char_pool_name", resp.Data.Pool.LinkCharPoolName))
+			continue
+		}
+		return weaponPoolID, resp, true
+	}
+
+	return "", nil, false
+}
+
+// buildWeaponConfig 把武器池介绍页响应转成 PoolConfig。
+func buildWeaponConfig(poolID string, resp *model.PoolContentResponse, currentTime string) model.PoolConfig {
+	config := model.PoolConfig{
+		PoolID:     poolID,
+		PoolName:   resp.Data.Pool.PoolName,
+		PoolType:   resp.Data.Pool.PoolType,
+		Up6Name:    resp.Data.Pool.Up6Name,
+		GachaType:  resp.Data.Pool.PoolGachaType,
+		LastUpdate: currentTime,
+	}
+	for _, item := range resp.Data.Pool.All {
+		if item.Rarity == 6 {
+			config.Up6WeaponID = item.ID
+			break
+		}
+	}
+	return config
+}
+
 // UpdatePoolConfig 更新卡池配置（分别处理角色池和武器池）
 func (a *App) UpdatePoolConfig() (string, error) {
 	logger.Log.Info("Frontend requested: UpdatePoolConfig")
@@ -552,7 +608,28 @@ func (a *App) UpdatePoolConfig() (string, error) {
 		time.Sleep(200 * time.Millisecond)
 	}
 
-	// 放在循环后而非循环内，避免边遍历边修改文件带来的不一致。
+	// 武器池配置兜底，更新角色的同时更新其武器池配置
+	derivedWeaponCount := 0
+	var derivedWeaponPoolIDs []string
+	for _, charPool := range charConfigs {
+		weaponPoolID, resp, ok := deriveWeaponPool(charPool.PoolID, charPool.PoolName, serverID, lang)
+		if !ok {
+			continue
+		}
+		// 推导成功即视为已发现，补进发现列表，使后续增量同步能找到它
+		derivedWeaponPoolIDs = append(derivedWeaponPoolIDs, weaponPoolID)
+		if knownPools[weaponPoolID] {
+			continue
+		}
+		weaponConfigs = append(weaponConfigs, buildWeaponConfig(weaponPoolID, resp, currentTime))
+		derivedWeaponCount++
+		logger.Log.Info("Derived weapon pool config from char pool",
+			zap.String("char_pool_id", charPool.PoolID),
+			zap.String("weapon_pool_id", weaponPoolID))
+		time.Sleep(200 * time.Millisecond)
+	}
+
+	// 放在循环后而非循环内，避免边遍历边修改文件带来的不一致
 	if len(deadCharPoolIDs) > 0 {
 		if err := storage.RemoveDiscoveredPoolIDs(deadCharPoolIDs, false); err != nil {
 			logger.Log.Error("Failed to remove dead char pool IDs", zap.Error(err))
@@ -561,6 +638,12 @@ func (a *App) UpdatePoolConfig() (string, error) {
 	if len(deadWeaponPoolIDs) > 0 {
 		if err := storage.RemoveDiscoveredPoolIDs(deadWeaponPoolIDs, true); err != nil {
 			logger.Log.Error("Failed to remove dead weapon pool IDs", zap.Error(err))
+		}
+	}
+	// RemoveDiscoveredPoolIDs 已剔除死池，这里再把推导出的活池并进发现列表
+	if len(derivedWeaponPoolIDs) > 0 {
+		if err := storage.SaveDiscoveredPoolIDs(derivedWeaponPoolIDs, true); err != nil {
+			logger.Log.Error("Failed to save derived weapon pool IDs", zap.Error(err))
 		}
 	}
 
@@ -600,6 +683,9 @@ func (a *App) UpdatePoolConfig() (string, error) {
 		} else {
 			finalMsg += "；" + msg2
 		}
+	}
+	if derivedWeaponCount > 0 {
+		finalMsg += fmt.Sprintf("（自动补全 %d 个关联武器池）", derivedWeaponCount)
 	}
 
 	logger.Log.Info("Pool config updated successfully",
