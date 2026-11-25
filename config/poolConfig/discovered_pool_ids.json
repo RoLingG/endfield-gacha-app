@@ -14,7 +14,9 @@
     "rerun_chr_yvonne",
     "special_1_6_1",
     "rerun_chr_tangtang",
-    "special_1_6_2"
+    "special_1_6_2",
+    "special_1_7_1",
+    "rerun_chr_aglina"
   ],
   "weaponPoolIds": [
     "weaponbox_constant_1",
@@ -36,7 +38,9 @@
     "rerun_wpn_yvonne",
     "weaponbox_1_6_1",
     "rerun_wpn_tangtang",
-    "weaponbox_1_6_2"
+    "weaponbox_1_6_2",
+    "rerun_wpn_aglina",
+    "weaponbox_1_7_1"
   ],
-  "lastUpdate": "2026-11-05 13:29:15"
+  "lastUpdate": "2026-11-25 13:18:09"
 }

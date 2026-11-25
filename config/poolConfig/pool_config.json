@@ -158,6 +158,24 @@
       "up6CharId": "chr_0037_minghe",
       "gachaType": "char",
       "lastUpdate": "2026-11-05 13:29:14"
+    },
+    {
+      "poolId": "special_1_7_1",
+      "poolName": "锻砧、行囊与蜜糖",
+      "poolType": "special",
+      "up6Name": "小刻",
+      "up6CharId": "chr_0040_sweetpie",
+      "gachaType": "char",
+      "lastUpdate": "2026-11-25 13:18:08"
+    },
+    {
+      "poolId": "rerun_chr_aglina",
+      "poolName": "致每一个飘游之愿",
+      "poolType": "rerun",
+      "up6Name": "洁尔佩塔",
+      "up6CharId": "chr_0013_aglina",
+      "gachaType": "char",
+      "lastUpdate": "2026-11-25 13:18:08"
     }
   ],
   "weaponPools": [
@@ -340,7 +358,25 @@
       "up6WeaponId": "wpn_sword_0025",
       "gachaType": "weapon",
       "lastUpdate": "2026-11-05 13:29:14"
+    },
+    {
+      "poolId": "rerun_wpn_aglina",
+      "poolName": "飘行申领",
+      "poolType": "rerun",
+      "up6Name": "使命必达",
+      "up6WeaponId": "wpn_funnel_0011",
+      "gachaType": "weapon",
+      "lastUpdate": "2026-11-25 13:18:08"
+    },
+    {
+      "poolId": "weaponbox_1_7_1",
+      "poolName": "恣游申领",
+      "poolType": "normal",
+      "up6Name": "甜美交易",
+      "up6WeaponId": "wpn_lance_0017",
+      "gachaType": "weapon",
+      "lastUpdate": "2026-11-25 13:18:08"
     }
   ],
-  "lastUpdate": "2026-11-05 13:29:14"
+  "lastUpdate": "2026-11-25 13:18:08"
 }
